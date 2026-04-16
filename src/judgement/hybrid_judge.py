@@ -14,9 +14,7 @@ import json
 import time
 from dataclasses import dataclass
 
-from google import genai
-
-from src.config import GEMINI_FLASH_MODEL, GEMINI_PRO_MODEL, FINE_TABLE_PATH
+from src.config import GEMINI_FLASH_MODEL, GEMINI_PRO_MODEL, FINE_TABLE_PATH, get_genai_client
 from src.parser.legal_compiler import (
     LawAST,
     ArticleNode,
@@ -65,7 +63,7 @@ class HybridJudge:
         self._ast = ast
         self._vsm = vsm_engine
         self._model = model
-        self._client = genai.Client()
+        self._client = get_genai_client()
         self._fine_table = self._load_fine_table()
 
     def judge(self, query: str, verbose: bool = True) -> HybridResult:
@@ -124,7 +122,8 @@ class HybridJudge:
 
         # === Layer 2: Gemini推論（条文を限定注入） ===
         if verbose:
-            print(f"[2026-AI-Logic]: Layer 2 起動... {self._model}")
+            print(f"[2026-AI-Logic]: Layer 2 起動... {self._model}", flush=True)
+            print(f"[2026-AI-Logic]: Gemini API呼び出し中...", flush=True)
 
         prompt = self._build_prompt(query, combined_text, fine_info, unique_flags)
 

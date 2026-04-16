@@ -73,7 +73,8 @@ def cmd_hybrid(model: str) -> None:
     judge = HybridJudge(ast, vsm, model=model)
 
     queries = [tc.scenario for tc in TEST_CASES]
-    for q in queries:
+    for i, q in enumerate(queries, 1):
+        print(f"\n[進捗 {i}/{len(queries)}]", flush=True)
         judge.judge(q, verbose=True)
 
 

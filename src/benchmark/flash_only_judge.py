@@ -18,9 +18,7 @@ import time
 from dataclasses import dataclass, asdict
 from pathlib import Path
 
-from google import genai
-
-from src.config import GEMINI_FLASH_MODEL, FINE_TABLE_PATH
+from src.config import GEMINI_FLASH_MODEL, FINE_TABLE_PATH, get_genai_client
 
 
 @dataclass
@@ -133,7 +131,7 @@ def run_flash_benchmark(
     verbose: bool = True,
 ) -> list[BenchmarkResult]:
     """Gemini Flash単体でベンチマークを実行する"""
-    client = genai.Client()
+    client = get_genai_client()
 
     cases = test_cases or TEST_CASES
     results: list[BenchmarkResult] = []
