@@ -1,0 +1,17 @@
+[project]
+name = "gemini-law-compiler"
+version = "0.1.0"
+description = "自転車の青切符をGeminiで判定しようとしたら、2008年度に書いた卒論に救われた話 - 検証用プロトタイプ"
+requires-python = ">=3.11"
+dependencies = [
+    "google-genai>=1.0.0",
+    "lxml>=5.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+]
+
+[project.scripts]
+velo-verify = "src.main:main"

@@ -1,0 +1,67 @@
+{
+  "metadata": {
+    "title": "自転車交通反則通告制度（青切符）反則金一覧",
+    "legal_basis": "令和6年法律第34号による道路交通法改正",
+    "effective_date": "2026-04-01",
+    "target": "16歳以上の自転車運転者",
+    "note": "反則金を納付すれば刑事手続きに移行せず前科なし。酒気帯び・酒酔い・妨害運転等は赤切符（刑事罰）"
+  },
+  "fines": [
+    {"amount": 12000, "violation": "携帯電話使用等（ながらスマホ・保持）", "article": "第71条第5号の5"},
+    {"amount": 12000, "violation": "放置駐車違反（駐停車禁止場所・高齢運転者等専用場所）", "article": "第44条・第45条"},
+    {"amount": 12000, "violation": "速度超過（25km/h以上30km/h未満）", "article": "第22条"},
+    {"amount": 11000, "violation": "放置駐車違反（駐車禁止場所・高齢運転者等専用場所）", "article": "第45条"},
+    {"amount": 10000, "violation": "放置駐車違反（駐停車禁止場所・高齢運転者等専用場所以外）", "article": "第44条"},
+    {"amount": 10000, "violation": "速度超過（20km/h以上25km/h未満）", "article": "第22条"},
+    {"amount": 9000, "violation": "放置駐車違反（駐車禁止場所・高齢運転者等専用場所以外）", "article": "第45条"},
+    {"amount": 9000, "violation": "駐停車違反（駐停車禁止場所・高齢運転者等専用場所）", "article": "第44条・第45条"},
+    {"amount": 8000, "violation": "駐停車違反（駐車禁止場所・高齢運転者等専用場所）", "article": "第45条"},
+    {"amount": 7000, "violation": "遮断踏切立入り", "article": "第33条第2項"},
+    {"amount": 7000, "violation": "速度超過（15km/h以上20km/h未満）", "article": "第22条"},
+    {"amount": 7000, "violation": "駐停車違反（駐停車禁止場所・高齢運転者等専用場所以外）", "article": "第44条"},
+    {"amount": 6000, "violation": "信号無視", "article": "第7条"},
+    {"amount": 6000, "violation": "通行区分違反（逆走・歩道通行等）", "article": "第17条"},
+    {"amount": 6000, "violation": "速度超過（15km/h未満）", "article": "第22条"},
+    {"amount": 6000, "violation": "追越し違反", "article": "第28条"},
+    {"amount": 6000, "violation": "踏切不停止等", "article": "第33条第1項"},
+    {"amount": 6000, "violation": "交差点安全進行義務違反", "article": "第36条第4項"},
+    {"amount": 6000, "violation": "横断歩行者等妨害等", "article": "第38条"},
+    {"amount": 6000, "violation": "安全運転義務違反", "article": "第70条"},
+    {"amount": 6000, "violation": "駐停車違反（駐車禁止場所・高齢運転者等専用場所以外）", "article": "第45条"},
+    {"amount": 5000, "violation": "指定場所一時不停止等", "article": "第43条"},
+    {"amount": 5000, "violation": "公安委員会遵守事項違反（傘差し運転・イヤホン等）", "article": "第71条第6号"},
+    {"amount": 5000, "violation": "通行禁止違反", "article": "第8条"},
+    {"amount": 5000, "violation": "歩行者用道路徐行違反", "article": "第9条"},
+    {"amount": 5000, "violation": "無灯火", "article": "第52条"},
+    {"amount": 5000, "violation": "自転車制動装置不良（ブレーキ不良）", "article": "第63条の9"},
+    {"amount": 5000, "violation": "急ブレーキ禁止違反", "article": "第24条"},
+    {"amount": 5000, "violation": "車間距離不保持", "article": "第26条"},
+    {"amount": 5000, "violation": "進路変更禁止違反", "article": "第26条の2"},
+    {"amount": 5000, "violation": "合図不履行", "article": "第53条"},
+    {"amount": 5000, "violation": "緊急車妨害等", "article": "第40条・第41条"},
+    {"amount": 5000, "violation": "交差点等進入禁止違反", "article": "第50条"},
+    {"amount": 5000, "violation": "安全不確認ドア開放等", "article": "第71条第4号の3"},
+    {"amount": 5000, "violation": "停止措置義務違反", "article": "第71条第5号"},
+    {"amount": 3000, "violation": "並進禁止違反", "article": "第19条"},
+    {"amount": 3000, "violation": "歩道徐行等義務違反", "article": "第63条の4第2項"},
+    {"amount": 3000, "violation": "軽車両乗車積載制限違反（二人乗り等）", "article": "第57条"},
+    {"amount": 3000, "violation": "路側帯進行方法違反", "article": "第17条の2"},
+    {"amount": 3000, "violation": "自転車道通行義務違反", "article": "第63条の3"},
+    {"amount": 3000, "violation": "交差点右左折方法違反", "article": "第34条"},
+    {"amount": 3000, "violation": "警音器使用制限違反", "article": "第54条第2項"}
+  ],
+  "criminal_only": [
+    {"violation": "酒酔い運転", "penalty": "5年以下の懲役又は100万円以下の罰金", "article": "第65条・第117条の2"},
+    {"violation": "酒気帯び運転", "penalty": "3年以下の懲役又は50万円以下の罰金", "article": "第65条・第117条の2の2"},
+    {"violation": "妨害運転（あおり運転）", "penalty": "3年以下の懲役又は50万円以下の罰金", "article": "第117条の2の2"}
+  ],
+  "sidewalk_exemptions": {
+    "article": "第63条の4第1項第2号・施行令第26条",
+    "description": "以下の者は歩道通行が認められる",
+    "eligible": [
+      "児童（6歳以上13歳未満）及び幼児（6歳未満）",
+      "70歳以上の者",
+      "身体に障害を有する者で政令で定めるもの"
+    ]
+  }
+}
