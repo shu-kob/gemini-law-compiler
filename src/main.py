@@ -56,12 +56,13 @@ def build_layers():
     return ast, vsm
 
 
-def cmd_benchmark() -> None:
-    """Flash単体ベンチマーク"""
-    print("\n[MODE]: Flash単体ベンチマーク")
+def cmd_benchmark(model: str = GEMINI_FLASH_MODEL) -> None:
+    """Gemini単体ベンチマーク"""
+    label = "Pro" if model == GEMINI_PRO_MODEL else "Flash"
+    print(f"\n[MODE]: {label}単体ベンチマーク (model={model})")
     print("[2026-AI-Logic]: Geminiに法規を丸投げし、ハルシネーションを観測します...\n")
 
-    results = run_flash_benchmark(verbose=True)
+    results = run_flash_benchmark(verbose=True, model=model)
     print_summary(results)
 
 
@@ -151,7 +152,7 @@ def main() -> None:
     model = GEMINI_FLASH_MODEL if args.model == "flash" else GEMINI_PRO_MODEL
 
     if args.benchmark:
-        cmd_benchmark()
+        cmd_benchmark(model)
     elif args.hybrid:
         cmd_hybrid(model)
     elif args.compare:

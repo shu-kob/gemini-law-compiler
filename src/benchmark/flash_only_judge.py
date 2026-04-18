@@ -18,7 +18,7 @@ import time
 from dataclasses import dataclass, asdict
 from pathlib import Path
 
-from src.config import GEMINI_FLASH_MODEL, FINE_TABLE_PATH, get_genai_client
+from src.config import GEMINI_FLASH_MODEL, GEMINI_PRO_MODEL, FINE_TABLE_PATH, get_genai_client
 
 
 @dataclass
@@ -129,8 +129,9 @@ SYSTEM_PROMPT = """\
 def run_flash_benchmark(
     test_cases: list[TestCase] | None = None,
     verbose: bool = True,
+    model: str = GEMINI_FLASH_MODEL,
 ) -> list[BenchmarkResult]:
-    """Gemini Flash単体でベンチマークを実行する"""
+    """Gemini単体でベンチマークを実行する（デフォルトはFlash、Pro等も指定可）"""
     client = get_genai_client()
 
     cases = test_cases or TEST_CASES
@@ -144,7 +145,7 @@ def run_flash_benchmark(
 
         start = time.monotonic_ns()
         response = client.models.generate_content(
-            model=GEMINI_FLASH_MODEL,
+            model=model,
             contents=tc.scenario,
             config={
                 "system_instruction": SYSTEM_PROMPT,
@@ -170,7 +171,7 @@ def run_flash_benchmark(
 
         if verbose:
             marker = "✓" if is_correct else "✗"
-            print(f"[2026-AI-Logic]: {marker} Flash回答 ({elapsed_ms}ms):")
+            print(f"[2026-AI-Logic]: {marker} 回答 ({elapsed_ms}ms):")
             print(f"  {flash_answer[:300]}")
             if hallucination:
                 print(f"[2026-AI-Logic]: ⚠ ハルシネーション検知: {hallucination}")
