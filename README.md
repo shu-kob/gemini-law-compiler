@@ -125,6 +125,17 @@ gemini-law-compiler/
 └── results/                         # 実行結果出力先（gitignore）
 ```
 
+## テスト
+
+純ロジック（XMLパーサ / VSM / プロンプト生成 / ハルシネーション検出）は Unit Test でカバーされている（Gemini API 呼び出し部分は対象外）。
+
+```bash
+pip install -e '.[dev]'
+python -m pytest tests/
+```
+
+各モジュールの振る舞い契約は [`docs/unit_test_spec.md`](docs/unit_test_spec.md) に記載。
+
 ## 対象法令
 
 - **道路交通法**（昭和35年法律第105号）

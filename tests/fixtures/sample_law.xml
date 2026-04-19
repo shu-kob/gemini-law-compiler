@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<DataRoot>
+  <Result>
+    <Code>0</Code>
+    <Message/>
+  </Result>
+  <ApplData>
+    <LawId/>
+    <LawNum>昭和三十五年法律第百五号</LawNum>
+    <LawFullText>
+      <Law Era="Showa" Lang="ja" LawType="Act" Num="105" Year="35">
+        <LawNum>昭和三十五年法律第百五号</LawNum>
+        <LawBody>
+          <LawTitle>道路交通法（テスト用サンプル）</LawTitle>
+          <MainProvision>
+            <Chapter Num="1">
+              <ChapterTitle>第一章　総則</ChapterTitle>
+
+              <Article Num="2">
+                <ArticleCaption>（定義）</ArticleCaption>
+                <ArticleTitle>第二条</ArticleTitle>
+                <Paragraph Num="1">
+                  <ParagraphNum/>
+                  <ParagraphSentence>
+                    <Sentence Function="main" Num="1">この法律において、次の各号に掲げる用語の意義は、それぞれ当該各号に定めるところによる。</Sentence>
+                  </ParagraphSentence>
+                  <Item Num="1">
+                    <ItemTitle>一</ItemTitle>
+                    <ItemSentence>
+                      <Sentence Num="1">道路<Ruby>路<Rt>ろ</Rt></Ruby>　道路法にいう道路をいう。</Sentence>
+                    </ItemSentence>
+                  </Item>
+                  <Item Num="2">
+                    <ItemTitle>二</ItemTitle>
+                    <ItemSentence>
+                      <Sentence Num="1">自転車　軽車両のうち、身体障害者用の車いす等を除く車両で、政令で定めるものをいう。</Sentence>
+                    </ItemSentence>
+                  </Item>
+                </Paragraph>
+              </Article>
+
+              <Article Num="7">
+                <ArticleCaption>（信号機の信号等に従う義務）</ArticleCaption>
+                <ArticleTitle>第七条</ArticleTitle>
+                <Paragraph Num="1">
+                  <ParagraphNum/>
+                  <ParagraphSentence>
+                    <Sentence Function="main" Num="1">道路を通行する歩行者又は車両等は、信号機の表示する信号に従わなければならない。</Sentence>
+                  </ParagraphSentence>
+                </Paragraph>
+              </Article>
+            </Chapter>
+
+            <Chapter Num="3">
+              <ChapterTitle>第三章　車両及び路面電車の交通方法</ChapterTitle>
+
+              <Article Num="63_4">
+                <ArticleCaption>（普通自転車の歩道通行）</ArticleCaption>
+                <ArticleTitle>第六十三条の四</ArticleTitle>
+                <Paragraph Num="1">
+                  <ParagraphNum/>
+                  <ParagraphSentence>
+                    <Sentence Function="main" Num="1">普通自転車は、次に掲げるときは、第十七条第一項の規定にかかわらず、歩道を通行することができる。</Sentence>
+                    <Sentence Function="proviso" Num="2">ただし、警察官等が歩行者の安全を確保するため必要があると認めて当該歩道を通行してはならない旨を指示したときは、この限りでない。</Sentence>
+                  </ParagraphSentence>
+                  <Item Num="1">
+                    <ItemTitle>一</ItemTitle>
+                    <ItemSentence>
+                      <Sentence Num="1">道路標識等により普通自転車が当該歩道を通行することができることとされているとき。</Sentence>
+                    </ItemSentence>
+                  </Item>
+                  <Item Num="2">
+                    <ItemTitle>二</ItemTitle>
+                    <ItemSentence>
+                      <Sentence Num="1">当該普通自転車の運転者が、児童、幼児その他の普通自転車により車道を通行することが危険であると認められるものとして政令で定める者であるとき。</Sentence>
+                    </ItemSentence>
+                  </Item>
+                </Paragraph>
+                <Paragraph Num="2">
+                  <ParagraphNum>２</ParagraphNum>
+                  <ParagraphSentence>
+                    <Sentence Function="main" Num="1">前項の場合において、普通自転車は、当該歩道の中央から車道寄りの部分を徐行しなければならない。</Sentence>
+                  </ParagraphSentence>
+                </Paragraph>
+                <SupplNote>（罰則　第二項については第百二十一条第一項第八号）</SupplNote>
+              </Article>
+
+              <Article Num="65">
+                <ArticleCaption>（酒気帯び運転等の禁止）</ArticleCaption>
+                <ArticleTitle>第六十五条</ArticleTitle>
+                <Paragraph Num="1">
+                  <ParagraphNum/>
+                  <ParagraphSentence>
+                    <Sentence Function="main" Num="1">何人も、酒気を帯びて車両等を運転してはならない。</Sentence>
+                  </ParagraphSentence>
+                </Paragraph>
+              </Article>
+
+              <Article Num="70">
+                <ArticleCaption>（安全運転の義務）</ArticleCaption>
+                <ArticleTitle>第七十条</ArticleTitle>
+                <Paragraph Num="1">
+                  <ParagraphNum/>
+                  <ParagraphSentence>
+                    <Sentence Function="main" Num="1">車両等の運転者は、ハンドル、ブレーキその他の装置を確実に操作し、道路、交通及び当該車両等の状況に応じ、他人に危害を及ぼさないような速度と方法で運転しなければならない。</Sentence>
+                  </ParagraphSentence>
+                </Paragraph>
+              </Article>
+
+              <Article Num="999">
+                <ArticleCaption>（試験用・非自転車条文）</ArticleCaption>
+                <ArticleTitle>第九百九十九条</ArticleTitle>
+                <Paragraph Num="1">
+                  <ParagraphNum/>
+                  <ParagraphSentence>
+                    <Sentence Function="main" Num="1">この条文は自転車とは無関係で、extract_bicycle_articles によって除外されるはずである。</Sentence>
+                  </ParagraphSentence>
+                </Paragraph>
+              </Article>
+            </Chapter>
+          </MainProvision>
+        </LawBody>
+      </Law>
+    </LawFullText>
+  </ApplData>
+</DataRoot>
