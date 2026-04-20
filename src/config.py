@@ -29,15 +29,14 @@ GEMINI_PRO_MODEL = "gemini-3.1-pro-preview"
 VERTEX_PROJECT = os.environ.get("GOOGLE_CLOUD_PROJECT")
 VERTEX_LOCATION = os.environ.get("GOOGLE_CLOUD_LOCATION", "global")
 
-if not VERTEX_PROJECT:
-    raise RuntimeError(
-        "GOOGLE_CLOUD_PROJECT が未設定です。"
-        "プロジェクト直下の .env に GOOGLE_CLOUD_PROJECT=<your-project-id> を記載してください。"
-    )
-
 
 def get_genai_client():
     """Vertex AI ADC経由のGenAIクライアントを生成する。"""
+    if not VERTEX_PROJECT:
+        raise RuntimeError(
+            "GOOGLE_CLOUD_PROJECT が未設定です。"
+            "プロジェクト直下の .env に GOOGLE_CLOUD_PROJECT=<your-project-id> を記載してください。"
+        )
     from google import genai
     return genai.Client(
         vertexai=True,
