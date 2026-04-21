@@ -14,7 +14,7 @@ import json
 import time
 from dataclasses import dataclass
 
-from src.config import GEMINI_FLASH_MODEL, GEMINI_PRO_MODEL, FINE_TABLE_PATH, get_genai_client
+from src.config import GEMINI_FLASH_MODEL, GEMINI_PRO_MODEL, FINE_TABLE_PATH, get_llm_client
 from src.parser.legal_compiler import (
     LawAST,
     ArticleNode,
@@ -63,7 +63,7 @@ class HybridJudge:
         self._ast = ast
         self._vsm = vsm_engine
         self._model = model
-        self._client = get_genai_client()
+        self._client = get_llm_client(model)
         self._fine_table = self._load_fine_table()
 
     def judge(self, query: str, verbose: bool = True) -> HybridResult:
