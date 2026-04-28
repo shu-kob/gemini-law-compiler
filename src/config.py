@@ -25,9 +25,18 @@ RESULTS_DIR = PROJECT_ROOT / "results"
 GEMINI_FLASH_MODEL = "gemini-3-flash-preview"
 GEMINI_PRO_MODEL = "gemini-3.1-pro-preview"
 
+# ローカルLLM設定（Ollama 経由）
+GEMMA3_MODEL = "gemma3:4b"
+OLLAMA_HOST = os.environ.get("OLLAMA_HOST", "http://localhost:11434")
+
 # Google Cloud設定（.env で管理。リポジトリには含めない）
 VERTEX_PROJECT = os.environ.get("GOOGLE_CLOUD_PROJECT")
 VERTEX_LOCATION = os.environ.get("GOOGLE_CLOUD_LOCATION", "global")
+
+
+def is_ollama_model(model: str) -> bool:
+    """ローカル（Ollama）で動かすモデルかどうか。"""
+    return model.startswith(("gemma", "llama", "qwen", "mistral", "phi"))
 
 
 def get_genai_client():
@@ -43,3 +52,15 @@ def get_genai_client():
         project=VERTEX_PROJECT,
         location=VERTEX_LOCATION,
     )
+
+
+def get_llm_client(model: str):
+    """モデル名に応じて LLM クライアントを返す。
+
+    Gemini クライアントと Ollama クライアントは同じ
+    `client.models.generate_content(model, contents, config)` インタフェースを持つ。
+    """
+    if is_ollama_model(model):
+        from src.llm.ollama_client import OllamaClient
+        return OllamaClient(OLLAMA_HOST)
+    return get_genai_client()

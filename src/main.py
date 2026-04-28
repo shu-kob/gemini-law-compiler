@@ -16,7 +16,7 @@ from __future__ import annotations
 import argparse
 import sys
 
-from src.config import XML_PATH, GEMINI_FLASH_MODEL, GEMINI_PRO_MODEL
+from src.config import XML_PATH, GEMINI_FLASH_MODEL, GEMINI_PRO_MODEL, GEMMA3_MODEL
 from src.parser.legal_compiler import parse_egov_xml, extract_bicycle_articles
 from src.matcher.vsm_engine import VSMEngine
 from src.benchmark.flash_only_judge import (
@@ -57,10 +57,15 @@ def build_layers():
 
 
 def cmd_benchmark(model: str = GEMINI_FLASH_MODEL) -> None:
-    """Gemini単体ベンチマーク"""
-    label = "Pro" if model == GEMINI_PRO_MODEL else "Flash"
+    """LLM単体ベンチマーク"""
+    if model == GEMINI_PRO_MODEL:
+        label = "Pro"
+    elif model == GEMMA3_MODEL:
+        label = "Gemma3 (local)"
+    else:
+        label = "Flash"
     print(f"\n[MODE]: {label}単体ベンチマーク (model={model})")
-    print("[2026-AI-Logic]: Geminiに法規を丸投げし、ハルシネーションを観測します...\n")
+    print("[2026-AI-Logic]: LLMに法規を丸投げし、ハルシネーションを観測します...\n")
 
     results = run_flash_benchmark(verbose=True, model=model)
     print_summary(results)
@@ -144,12 +149,16 @@ def main() -> None:
         help="Flash単体 vs ハイブリッドの比較実行",
     )
     parser.add_argument(
-        "--model", choices=["flash", "pro"], default="flash",
-        help="使用するGeminiモデル (default: flash)",
+        "--model", choices=["flash", "pro", "gemma3"], default="flash",
+        help="使用するLLMモデル: flash/pro (Gemini) または gemma3 (ローカル Ollama) (default: flash)",
     )
 
     args = parser.parse_args()
-    model = GEMINI_FLASH_MODEL if args.model == "flash" else GEMINI_PRO_MODEL
+    model = {
+        "flash": GEMINI_FLASH_MODEL,
+        "pro": GEMINI_PRO_MODEL,
+        "gemma3": GEMMA3_MODEL,
+    }[args.model]
 
     if args.benchmark:
         cmd_benchmark(model)
@@ -164,6 +173,7 @@ def main() -> None:
         print("  python -m src.main --hybrid            # ハイブリッド判定")
         print("  python -m src.main --compare           # 比較（ブログ用）")
         print("  python -m src.main --hybrid --model pro  # Proモデル使用")
+        print("  python -m src.main --hybrid --model gemma3  # ローカル gemma3:4b 使用")
 
 
 if __name__ == "__main__":
