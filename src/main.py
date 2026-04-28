@@ -16,7 +16,13 @@ from __future__ import annotations
 import argparse
 import sys
 
-from src.config import XML_PATH, GEMINI_FLASH_MODEL, GEMINI_PRO_MODEL, GEMMA3_MODEL
+from src.config import (
+    XML_PATH,
+    GEMINI_FLASH_MODEL,
+    GEMINI_PRO_MODEL,
+    GEMMA3_MODEL,
+    CLAUDE_MODEL,
+)
 from src.parser.legal_compiler import parse_egov_xml, extract_bicycle_articles
 from src.matcher.vsm_engine import VSMEngine
 from src.benchmark.flash_only_judge import (
@@ -62,6 +68,8 @@ def cmd_benchmark(model: str = GEMINI_FLASH_MODEL) -> None:
         label = "Pro"
     elif model == GEMMA3_MODEL:
         label = "Gemma3 (local)"
+    elif model == CLAUDE_MODEL:
+        label = "Claude Sonnet 4.6"
     else:
         label = "Flash"
     print(f"\n[MODE]: {label}単体ベンチマーク (model={model})")
@@ -149,8 +157,9 @@ def main() -> None:
         help="Flash単体 vs ハイブリッドの比較実行",
     )
     parser.add_argument(
-        "--model", choices=["flash", "pro", "gemma3"], default="flash",
-        help="使用するLLMモデル: flash/pro (Gemini) または gemma3 (ローカル Ollama) (default: flash)",
+        "--model", choices=["flash", "pro", "gemma3", "claude"], default="flash",
+        help="使用するLLMモデル: flash/pro (Gemini) / gemma3 (ローカル Ollama) / "
+             "claude (Vertex AI 経由 Claude Sonnet 4.6) (default: flash)",
     )
 
     args = parser.parse_args()
@@ -158,6 +167,7 @@ def main() -> None:
         "flash": GEMINI_FLASH_MODEL,
         "pro": GEMINI_PRO_MODEL,
         "gemma3": GEMMA3_MODEL,
+        "claude": CLAUDE_MODEL,
     }[args.model]
 
     if args.benchmark:
@@ -174,6 +184,7 @@ def main() -> None:
         print("  python -m src.main --compare           # 比較（ブログ用）")
         print("  python -m src.main --hybrid --model pro  # Proモデル使用")
         print("  python -m src.main --hybrid --model gemma3  # ローカル gemma3:4b 使用")
+        print("  python -m src.main --hybrid --model claude   # Claude Sonnet 4.6 使用 (Vertex AI)")
 
 
 if __name__ == "__main__":
