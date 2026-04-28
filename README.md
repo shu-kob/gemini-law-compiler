@@ -91,7 +91,25 @@ python -m src.main --compare
 
 # Proモデル使用
 python -m src.main --hybrid --model pro
+
+# Claude Opus 4.7 使用（要 ANTHROPIC_API_KEY）
+python -m src.main --hybrid --model claude
 ```
+
+### Claude を使う場合
+
+Vertex AI 経由で Claude Opus 4.7 を呼び出します（Gemini と同じ ADC 認証・同じ GCP プロジェクトを流用）。
+追加の API キーは不要で、対象プロジェクトの Vertex AI Model Garden で Claude を有効化しておく必要があります。
+
+```bash
+# Model Garden で Claude へのアクセスを承諾済みであることが前提
+gcloud auth application-default login --scopes="https://www.googleapis.com/auth/cloud-platform"
+gcloud auth application-default set-quota-project YOUR_PROJECT_ID
+```
+
+`--model claude` 指定時は `anthropic[vertex]` SDK の `AnthropicVertex` クライアント経由で
+`claude-sonnet-4-6@default`（global エンドポイント、adaptive thinking 有効）を呼び出します。
+モデル ID は `src/config.py` の `CLAUDE_MODEL` で変更可能（例: `claude-opus-4-7`）。
 
 ### Layer 1 のみ（API不要）
 

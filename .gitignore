@@ -30,8 +30,13 @@ application_default_credentials.json
 # Claude Code
 .claude/
 
-# e-Gov法令XML（1.5MB、APIから再取得可能）
-data/road_traffic_act_full.xml
+# data/ 配下は基本的にコミット対象外（e-Gov XML、ブログ下書き、スライド原稿など）
+# 反則金テーブルだけはコード側から参照するためコミット対象に残す
+data/*
+!data/bicycle_fine_table.json
+
+# ブログ下書き・スライド原稿などの執筆物
+drafts/
 
 # Logs / Results
 *.log

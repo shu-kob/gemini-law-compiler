@@ -29,6 +29,9 @@ GEMINI_PRO_MODEL = "gemini-3.1-pro-preview"
 GEMMA3_MODEL = "gemma3:4b"
 OLLAMA_HOST = os.environ.get("OLLAMA_HOST", "http://localhost:11434")
 
+# Anthropic Claude（Vertex AI 経由）設定
+CLAUDE_MODEL = "claude-opus-4-7@default"
+
 # Google Cloud設定（.env で管理。リポジトリには含めない）
 VERTEX_PROJECT = os.environ.get("GOOGLE_CLOUD_PROJECT")
 VERTEX_LOCATION = os.environ.get("GOOGLE_CLOUD_LOCATION", "global")
@@ -37,6 +40,11 @@ VERTEX_LOCATION = os.environ.get("GOOGLE_CLOUD_LOCATION", "global")
 def is_ollama_model(model: str) -> bool:
     """ローカル（Ollama）で動かすモデルかどうか。"""
     return model.startswith(("gemma", "llama", "qwen", "mistral", "phi"))
+
+
+def is_anthropic_model(model: str) -> bool:
+    """Anthropic Claude API で動かすモデルかどうか。"""
+    return model.startswith("claude-")
 
 
 def get_genai_client():
@@ -57,10 +65,13 @@ def get_genai_client():
 def get_llm_client(model: str):
     """モデル名に応じて LLM クライアントを返す。
 
-    Gemini クライアントと Ollama クライアントは同じ
+    Gemini / Ollama / Anthropic クライアントは同じ
     `client.models.generate_content(model, contents, config)` インタフェースを持つ。
     """
     if is_ollama_model(model):
         from src.llm.ollama_client import OllamaClient
         return OllamaClient(OLLAMA_HOST)
+    if is_anthropic_model(model):
+        from src.llm.anthropic_client import AnthropicClient
+        return AnthropicClient(project_id=VERTEX_PROJECT, region=VERTEX_LOCATION)
     return get_genai_client()
