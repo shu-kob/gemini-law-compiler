@@ -5,10 +5,11 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
-PROJECT_ROOT = Path(__file__).resolve().parent.parent
+PROJECT_ROOT = Path(__file__).resolve().parent.parent  # backend/
+REPO_ROOT = PROJECT_ROOT.parent
 
-# プロジェクト直下の .env からGCP設定などを読み込む（.env はGit管理外）
-load_dotenv(PROJECT_ROOT / ".env")
+# リポジトリ直下の .env からGCP設定などを読み込む（.env はGit管理外）
+load_dotenv(REPO_ROOT / ".env")
 
 # GOOGLE_APPLICATION_CREDENTIALS がサービスアカウントキーを指していると
 # Vertex AI ADCの認証が上書きされるため、プロセス起動時に除外する。
