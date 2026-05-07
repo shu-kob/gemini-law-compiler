@@ -54,7 +54,11 @@
 ### インストール
 
 ```bash
-pip install -e .
+# CLI / API バックエンド（Python）
+pip install -e ./backend
+
+# Web フロントエンド（Next.js）
+cd frontend && npm install && cd ..
 ```
 
 ### 認証設定
@@ -73,13 +77,17 @@ gcloud auth application-default set-quota-project YOUR_PROJECT_ID
 e-Gov法令APIから道路交通法XMLを取得:
 
 ```bash
-curl -o data/road_traffic_act_full.xml \
+curl -o backend/data/road_traffic_act_full.xml \
   "https://laws.e-gov.go.jp/api/1/lawdata/昭和三十五年法律第百五号"
 ```
 
 ## 使い方
 
+### CLI
+
 ```bash
+cd backend
+
 # Flash単体ベンチマーク（ハルシネーション観測）
 python -m src.main --benchmark
 
@@ -95,6 +103,32 @@ python -m src.main --hybrid --model pro
 # Claude Opus 4.7 使用（要 ANTHROPIC_API_KEY）
 python -m src.main --hybrid --model claude
 ```
+
+### Web UI（Next.js + FastAPI）
+
+`検索文 → 合法/違反 + 理由` を Web からインタラクティブに試せる。
+モデル切替（Gemini Flash / Pro / Gemma3 / Claude）と、グラウンディング方式の
+切替（LLM 単体 / Layer 1 決定論的グラウンディング / Web Search グラウンディング）に対応。
+
+```bash
+# 1. バックエンド (FastAPI) を起動
+cd backend
+python -m src.api.server          # http://127.0.0.1:8000
+
+# 2. 別ターミナルでフロントエンド (Next.js) を起動
+cd frontend
+npm run dev                       # http://localhost:3000
+```
+
+API エンドポイント:
+
+- `GET  /api/health` — ヘルスチェック
+- `GET  /api/models` — 対応モデル一覧
+- `GET  /api/modes`  — 対応グラウンディングモード一覧
+- `POST /api/judge`  — `{ "query": "...", "model": "flash|pro|gemma3|claude", "mode": "llm_only|layer1|web_search" }`
+
+Web Search グラウンディングは Gemini モデル (flash/pro) のみ対応（Vertex AI の
+`google_search` ツール経由）。Claude / Gemma3 では Layer 1 グラウンディングを推奨。
 
 ### Claude を使う場合
 
@@ -114,6 +148,8 @@ gcloud auth application-default set-quota-project YOUR_PROJECT_ID
 ### Layer 1 のみ（API不要）
 
 ```bash
+cd backend
+
 # e-Gov XMLパーサー
 python -m src.parser.legal_compiler
 
@@ -126,21 +162,28 @@ python -m src.matcher.vsm_engine
 ```
 gemini-law-compiler/
 ├── .spec/spec.md                    # 仕様書
-├── data/
-│   ├── road_traffic_act_full.xml    # e-Gov法令XML（gitignore）
-│   └── bicycle_fine_table.json      # 青切符反則金テーブル
-├── src/
-│   ├── config.py                    # 共通設定・Vertex AI接続
-│   ├── main.py                      # エントリポイント
-│   ├── parser/
-│   │   └── legal_compiler.py        # e-Gov XML → 条文AST変換
-│   ├── matcher/
-│   │   └── vsm_engine.py            # TF-IDF cos類似度エンジン
-│   ├── benchmark/
-│   │   └── flash_only_judge.py      # Flash単体ベンチマーク
-│   └── judgement/
-│       └── hybrid_judge.py          # ハイブリッド判定エンジン
-└── results/                         # 実行結果出力先（gitignore）
+├── backend/                         # Python パッケージ（CLI + API）
+│   ├── pyproject.toml
+│   ├── data/
+│   │   ├── road_traffic_act_full.xml    # e-Gov法令XML（gitignore）
+│   │   └── bicycle_fine_table.json      # 青切符反則金テーブル
+│   ├── src/
+│   │   ├── config.py                    # 共通設定・Vertex AI接続
+│   │   ├── main.py                      # CLI エントリポイント
+│   │   ├── api/
+│   │   │   ├── server.py                # FastAPI（/api/judge ほか）
+│   │   │   └── judge_service.py         # 3 モードのディスパッチャ
+│   │   ├── parser/legal_compiler.py     # e-Gov XML → 条文AST変換
+│   │   ├── matcher/vsm_engine.py        # TF-IDF cos類似度エンジン
+│   │   ├── benchmark/flash_only_judge.py# LLM 単体ベンチマーク
+│   │   ├── judgement/hybrid_judge.py    # ハイブリッド判定エンジン
+│   │   └── llm/                         # Ollama / Anthropic アダプタ
+│   └── tests/                       # pytest（純ロジック）
+└── frontend/                        # Next.js (App Router, TypeScript)
+    └── src/
+        ├── app/page.tsx
+        ├── components/JudgeForm.tsx
+        └── lib/api.ts
 ```
 
 ## テスト
@@ -148,6 +191,7 @@ gemini-law-compiler/
 純ロジック（XMLパーサ / VSM / プロンプト生成 / ハルシネーション検出）は Unit Test でカバーされている（Gemini API 呼び出し部分は対象外）。
 
 ```bash
+cd backend
 pip install -e '.[dev]'
 python -m pytest tests/
 ```
