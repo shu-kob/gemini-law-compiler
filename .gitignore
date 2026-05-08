@@ -12,6 +12,7 @@ venv/
 .env
 .env.*
 !.env.example
+!.env.local.example
 *.key
 credentials.json
 application_default_credentials.json
@@ -34,6 +35,15 @@ application_default_credentials.json
 # 反則金テーブルだけはコード側から参照するためコミット対象に残す
 data/*
 !data/bicycle_fine_table.json
+backend/data/*
+!backend/data/bicycle_fine_table.json
+
+# Frontend (Next.js)
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+frontend/.env.local
+frontend/.env*.local
 
 # ブログ下書き・スライド原稿などの執筆物
 drafts/
@@ -42,3 +52,4 @@ drafts/
 *.log
 logs/
 results/
+backend/results/
