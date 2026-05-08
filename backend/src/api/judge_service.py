@@ -21,6 +21,7 @@ from typing import Any
 from src.benchmark.flash_only_judge import SYSTEM_PROMPT as LLM_ONLY_SYSTEM_PROMPT
 from src.config import (
     CLAUDE_MODEL,
+    CLAUDE_SONNET_MODEL,
     GEMINI_FLASH_MODEL,
     GEMINI_PRO_MODEL,
     GEMMA3_MODEL,
@@ -40,6 +41,7 @@ SUPPORTED_MODELS: dict[str, str] = {
     "pro": GEMINI_PRO_MODEL,
     "gemma3": GEMMA3_MODEL,
     "claude": CLAUDE_MODEL,
+    "claude_sonnet": CLAUDE_SONNET_MODEL,
 }
 
 GROUNDING_MODES = ("llm_only", "layer1", "web_search")

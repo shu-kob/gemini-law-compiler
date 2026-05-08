@@ -46,7 +46,10 @@ _service = JudgeService()
 
 class JudgeRequest(BaseModel):
     query: str = Field(min_length=1, max_length=2000)
-    model: str = Field(default="flash", description="flash|pro|gemma3|claude")
+    model: str = Field(
+        default="flash",
+        description="flash|pro|gemma3|claude|claude_sonnet",
+    )
     mode: str = Field(default="layer1", description="llm_only|layer1|web_search")
 
 
@@ -68,7 +71,8 @@ def list_models() -> dict[str, list[ModelInfo]]:
         "flash": "Gemini 3 Flash",
         "pro": "Gemini 3.1 Pro",
         "gemma3": "Gemma3 (Ollama / local)",
-        "claude": "Claude on Vertex AI",
+        "claude": "Claude Opus 4.7 (Vertex AI)",
+        "claude_sonnet": "Claude Sonnet 4.6 (Vertex AI)",
     }
     items = [
         ModelInfo(

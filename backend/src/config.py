@@ -32,6 +32,7 @@ OLLAMA_HOST = os.environ.get("OLLAMA_HOST", "http://localhost:11434")
 
 # Anthropic Claude（Vertex AI 経由）設定
 CLAUDE_MODEL = "claude-opus-4-7@default"
+CLAUDE_SONNET_MODEL = "claude-sonnet-4-6@default"
 
 # Google Cloud設定（.env で管理。リポジトリには含めない）
 VERTEX_PROJECT = os.environ.get("GOOGLE_CLOUD_PROJECT")
