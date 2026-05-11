@@ -20,6 +20,20 @@ You can start editing the page by modifying `app/page.tsx`. The page auto-update
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
+## Unit Test
+
+Jest + React Testing Library で実装されている。
+
+```bash
+npm test          # 一度だけ実行
+npm run test:watch # ファイル変更で再実行
+```
+
+- `src/lib/__tests__/api.test.ts` — `fetchModels` / `fetchModes` / `postJudge` の `fetch` 呼び出しと例外
+- `src/components/__tests__/JudgeForm.test.tsx` — 初期描画 / モデル切替で web_search が disable される / サンプルチップ / 送信 / エラー表示
+
+ネットワーク呼び出しはすべて `jest.mock("../../lib/api")` 等でモックしているため、バックエンド起動は不要。
+
 ## Learn More
 
 To learn more about Next.js, take a look at the following resources:
