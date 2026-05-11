@@ -22,6 +22,7 @@ from src.config import (
     GEMINI_PRO_MODEL,
     GEMMA3_MODEL,
     CLAUDE_MODEL,
+    CLAUDE_SONNET_MODEL,
 )
 from src.parser.legal_compiler import parse_egov_xml, extract_bicycle_articles
 from src.matcher.vsm_engine import VSMEngine
@@ -69,6 +70,8 @@ def cmd_benchmark(model: str = GEMINI_FLASH_MODEL) -> None:
     elif model == GEMMA3_MODEL:
         label = "Gemma3 (local)"
     elif model == CLAUDE_MODEL:
+        label = "Claude Opus 4.7"
+    elif model == CLAUDE_SONNET_MODEL:
         label = "Claude Sonnet 4.6"
     else:
         label = "Flash"
@@ -157,9 +160,12 @@ def main() -> None:
         help="Flash単体 vs ハイブリッドの比較実行",
     )
     parser.add_argument(
-        "--model", choices=["flash", "pro", "gemma3", "claude"], default="flash",
+        "--model",
+        choices=["flash", "pro", "gemma3", "claude", "claude_sonnet"],
+        default="flash",
         help="使用するLLMモデル: flash/pro (Gemini) / gemma3 (ローカル Ollama) / "
-             "claude (Vertex AI 経由 Claude Sonnet 4.6) (default: flash)",
+             "claude (Vertex AI 経由 Claude Opus 4.7) / "
+             "claude_sonnet (Vertex AI 経由 Claude Sonnet 4.6) (default: flash)",
     )
 
     args = parser.parse_args()
@@ -168,6 +174,7 @@ def main() -> None:
         "pro": GEMINI_PRO_MODEL,
         "gemma3": GEMMA3_MODEL,
         "claude": CLAUDE_MODEL,
+        "claude_sonnet": CLAUDE_SONNET_MODEL,
     }[args.model]
 
     if args.benchmark:
@@ -184,7 +191,8 @@ def main() -> None:
         print("  python -m src.main --compare           # 比較（ブログ用）")
         print("  python -m src.main --hybrid --model pro  # Proモデル使用")
         print("  python -m src.main --hybrid --model gemma3  # ローカル gemma3:4b 使用")
-        print("  python -m src.main --hybrid --model claude   # Claude Sonnet 4.6 使用 (Vertex AI)")
+        print("  python -m src.main --hybrid --model claude          # Claude Opus 4.7 使用 (Vertex AI)")
+        print("  python -m src.main --hybrid --model claude_sonnet   # Claude Sonnet 4.6 使用 (Vertex AI)")
 
 
 if __name__ == "__main__":
