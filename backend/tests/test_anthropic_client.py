@@ -1,7 +1,7 @@
 """Unit tests for src/llm/anthropic_client.py
 
 `anthropic.AnthropicVertex` を fake クラスに差し替え、リクエスト引数の構築
-(adaptive thinking / temperature 抑制 / system / max_tokens) を検証する。
+(thinking config / temperature 抑制 / system / max_tokens) を検証する。
 ネットワーク・GCP 認証は触らない。
 """
 
@@ -189,9 +189,48 @@ class TestGenerateContentRequest:
 
 
 # ---------------------------------------------------------------------------
-# adaptive thinking: Opus/Sonnet 4.6 系では temperature 抑制 + thinking 有効化
+# thinking config: デフォルト無効、明示時のみ転送。
+# Opus 4.7 / Sonnet 4.6 では temperature は常に抑制される (モデル側の制約)。
 # ---------------------------------------------------------------------------
-class TestAdaptiveThinking:
+class TestThinkingConfig:
+    @pytest.mark.parametrize(
+        "model",
+        [
+            "claude-opus-4-7@default",
+            "claude-opus-4-6@default",
+            "claude-sonnet-4-6@default",
+            "claude-3-5-sonnet@default",
+        ],
+    )
+    def test_thinking_disabled_by_default(
+        self, install_fake_anthropic, model: str
+    ) -> None:
+        # Layer 1 グラウンディング下では thinking はレイテンシ増のみ大きいため (#10)、
+        # 呼び出し側が明示しない限り API に thinking を渡さない。
+        captured = install_fake_anthropic()
+        from src.llm.anthropic_client import AnthropicClient
+
+        AnthropicClient(project_id="p").models.generate_content(model, "Q")
+        assert "thinking" not in captured.captured_kwargs
+
+    def test_thinking_is_forwarded_when_specified(
+        self, install_fake_anthropic
+    ) -> None:
+        captured = install_fake_anthropic()
+        from src.llm.anthropic_client import AnthropicClient
+
+        AnthropicClient(project_id="p").models.generate_content(
+            "claude-sonnet-4-6@default",
+            "Q",
+            config={"thinking": {"type": "enabled", "budget_tokens": 1024}},
+        )
+        assert captured.captured_kwargs.get("thinking") == {
+            "type": "enabled",
+            "budget_tokens": 1024,
+        }
+
+
+class TestTemperatureHandling:
     @pytest.mark.parametrize(
         "model",
         [
@@ -200,24 +239,10 @@ class TestAdaptiveThinking:
             "claude-sonnet-4-6@default",
         ],
     )
-    def test_thinking_is_enabled(self, install_fake_anthropic, model: str) -> None:
-        captured = install_fake_anthropic()
-        from src.llm.anthropic_client import AnthropicClient
-
-        AnthropicClient(project_id="p").models.generate_content(model, "Q")
-        assert captured.captured_kwargs.get("thinking") == {"type": "adaptive"}
-
-    @pytest.mark.parametrize(
-        "model",
-        [
-            "claude-opus-4-7@default",
-            "claude-sonnet-4-6@default",
-        ],
-    )
-    def test_temperature_is_dropped_for_adaptive_models(
+    def test_temperature_is_dropped_for_restricted_models(
         self, install_fake_anthropic, model: str
     ) -> None:
-        # Opus 4.7 では temperature を渡すと API が 400 を返すので、
+        # Opus 4.7 / Sonnet 4.6 では temperature を渡すと API が 400 を返すので、
         # config に入っていてもクライアント側で必ず捨てられる必要がある
         captured = install_fake_anthropic()
         from src.llm.anthropic_client import AnthropicClient
@@ -227,13 +252,10 @@ class TestAdaptiveThinking:
         )
         assert "temperature" not in captured.captured_kwargs
 
-
-class TestNonAdaptiveModel:
     def test_temperature_is_passed_for_legacy_models(
         self, install_fake_anthropic
     ) -> None:
-        # adaptive thinking 対象外のモデル (例: claude-3-5-sonnet) では
-        # temperature が config に入っていればそのまま転送される
+        # 旧モデル (例: claude-3-5-sonnet) では temperature を転送する
         captured = install_fake_anthropic()
         from src.llm.anthropic_client import AnthropicClient
 
@@ -241,15 +263,6 @@ class TestNonAdaptiveModel:
             "claude-3-5-sonnet@default", "Q", config={"temperature": 0.3}
         )
         assert captured.captured_kwargs.get("temperature") == pytest.approx(0.3)
-
-    def test_no_thinking_for_legacy_models(self, install_fake_anthropic) -> None:
-        captured = install_fake_anthropic()
-        from src.llm.anthropic_client import AnthropicClient
-
-        AnthropicClient(project_id="p").models.generate_content(
-            "claude-3-5-sonnet@default", "Q"
-        )
-        assert "thinking" not in captured.captured_kwargs
 
 
 # ---------------------------------------------------------------------------

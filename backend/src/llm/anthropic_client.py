@@ -8,9 +8,12 @@
 プロジェクト ID とロケーションは Gemini と同じ環境変数（GOOGLE_CLOUD_PROJECT /
 GOOGLE_CLOUD_LOCATION）を使い回す。
 
-Opus 4.7 では `temperature` / `top_p` / `top_k` が削除されているため、config に
-渡された temperature は無視する（送ると 400）。代わりに adaptive thinking を有効化し、
-法令判定タスクでの推論精度を確保する。
+Opus 4.7 / Sonnet 4.6 では `temperature` / `top_p` / `top_k` が削除されているため、
+config に渡された temperature は無視する（送ると 400）。
+
+thinking は呼び出し側が `config["thinking"]` で明示した場合のみ有効化する。
+Layer 1 グラウンディング済みのタスクでは thinking の効果が小さい一方でレイテンシが
+3〜4 倍に膨らむため、デフォルトでは無効。詳細は issue #10。
 """
 
 from __future__ import annotations
@@ -23,7 +26,8 @@ class AnthropicResponse:
     text: str
 
 
-_ADAPTIVE_THINKING_MODELS = (
+# これらのモデルは temperature / top_p / top_k を受け付けないため除外する。
+_NO_TEMPERATURE_MODELS = (
     "claude-opus-4-7",
     "claude-opus-4-6",
     "claude-sonnet-4-6",
@@ -51,11 +55,12 @@ class _AnthropicVertexModels:
         if system_instruction:
             kwargs["system"] = system_instruction
 
-        if model.startswith(_ADAPTIVE_THINKING_MODELS):
-            kwargs["thinking"] = {"type": "adaptive"}
-        else:
-            if "temperature" in config:
-                kwargs["temperature"] = float(config["temperature"])
+        if not model.startswith(_NO_TEMPERATURE_MODELS) and "temperature" in config:
+            kwargs["temperature"] = float(config["temperature"])
+
+        thinking_cfg = config.get("thinking")
+        if thinking_cfg:
+            kwargs["thinking"] = thinking_cfg
 
         response = self._client.messages.create(**kwargs)
 
