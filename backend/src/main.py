@@ -26,6 +26,7 @@ from src.config import (
 )
 from src.parser.legal_compiler import parse_egov_xml, extract_bicycle_articles
 from src.matcher.vsm_engine import VSMEngine
+from src.matcher.embedding_engine import EmbeddingEngine
 from src.benchmark.flash_only_judge import (
     run_flash_benchmark,
     print_summary,
@@ -48,16 +49,33 @@ BANNER = r"""
 """
 
 
-def build_layers():
-    """Layer 1 のコンポーネントを構築する"""
+def build_layers(use_embedding: bool = True):
+    """Layer 1 のコンポーネントを構築する。
+
+    use_embedding=True なら Vertex AI Embedding を Layer 1 に同梱した
+    ハイブリッド構成（TF-IDF + 意味埋め込み）になる。デフォルトは ON。
+    Embedding 利用には GCP プロジェクト ADC が必要で、初期化に数秒かかる。
+    純 TF-IDF (2008 年式) で動かしたいときは False を渡す。
+    """
     print("[2008-Thesis-Logic]: e-Gov法令XMLをパース中...")
     ast = parse_egov_xml(XML_PATH)
     bicycle_articles = extract_bicycle_articles(ast)
     print(f"[2008-Thesis-Logic]: パース完了。全{len(ast.articles)}条中、"
           f"自転車関連{len(bicycle_articles)}条を抽出。")
 
-    print(f"[2008-Thesis-Logic]: TF-IDF VSMインデックス構築中...")
-    vsm = VSMEngine(ast, article_filter=bicycle_articles)
+    embedding = None
+    if use_embedding:
+        print("[2026-Semantic]: Vertex AI Embedding で意味インデックス構築中...")
+        embedding = EmbeddingEngine(ast, article_filter=bicycle_articles)
+        print(f"[2026-Semantic]: Embedding 完了。次元={len(embedding.doc_embeddings[0])}")
+
+    label = "ハイブリッド (TF-IDF + Embedding α=0.3)" if use_embedding else "TF-IDF 単体"
+    print(f"[2008-Thesis-Logic]: VSMインデックス構築中 ({label})...")
+    vsm = VSMEngine(
+        ast,
+        article_filter=bicycle_articles,
+        embedding_engine=embedding,
+    )
     print(f"[2008-Thesis-Logic]: インデックス構築完了。")
 
     return ast, vsm
@@ -82,11 +100,11 @@ def cmd_benchmark(model: str = GEMINI_FLASH_MODEL) -> None:
     print_summary(results)
 
 
-def cmd_hybrid(model: str) -> None:
+def cmd_hybrid(model: str, use_embedding: bool = True) -> None:
     """ハイブリッド判定"""
-    print(f"\n[MODE]: ハイブリッド判定 (model={model})")
+    print(f"\n[MODE]: ハイブリッド判定 (model={model}, embedding={use_embedding})")
 
-    ast, vsm = build_layers()
+    ast, vsm = build_layers(use_embedding=use_embedding)
     judge = HybridJudge(ast, vsm, model=model)
 
     queries = [tc.scenario for tc in TEST_CASES]
@@ -95,7 +113,7 @@ def cmd_hybrid(model: str) -> None:
         judge.judge(q, verbose=True)
 
 
-def cmd_compare(model: str) -> None:
+def cmd_compare(model: str, use_embedding: bool = True) -> None:
     """ベンチマーク → ハイブリッドの比較（ブログ用）"""
     print("\n[MODE]: Flash単体 vs ハイブリッド 比較")
     print("=" * 60)
@@ -111,7 +129,7 @@ def cmd_compare(model: str) -> None:
     print("\n" + "─" * 60)
     print("【Phase 2】ハイブリッド構成 — 2008年卒論 × 2026年AI")
     print("─" * 60)
-    ast, vsm = build_layers()
+    ast, vsm = build_layers(use_embedding=use_embedding)
     judge = HybridJudge(ast, vsm, model=model)
 
     hybrid_results = []
@@ -167,6 +185,11 @@ def main() -> None:
              "claude (Vertex AI 経由 Claude Opus 4.7) / "
              "claude_sonnet (Vertex AI 経由 Claude Sonnet 4.6) (default: flash)",
     )
+    parser.add_argument(
+        "--no-embedding", action="store_true",
+        help="Layer 1 を純 TF-IDF (2008年式) で動かす。"
+             "デフォルトは Vertex AI Embedding と合成したハイブリッドモード。",
+    )
 
     args = parser.parse_args()
     model = {
@@ -177,12 +200,14 @@ def main() -> None:
         "claude_sonnet": CLAUDE_SONNET_MODEL,
     }[args.model]
 
+    use_embedding = not args.no_embedding
+
     if args.benchmark:
         cmd_benchmark(model)
     elif args.hybrid:
-        cmd_hybrid(model)
+        cmd_hybrid(model, use_embedding=use_embedding)
     elif args.compare:
-        cmd_compare(model)
+        cmd_compare(model, use_embedding=use_embedding)
     else:
         parser.print_help()
         print("\n使用例:")
