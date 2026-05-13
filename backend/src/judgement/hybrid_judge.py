@@ -134,6 +134,9 @@ class HybridJudge:
             config={
                 "system_instruction": HYBRID_SYSTEM_PROMPT,
                 "temperature": 0.0,
+                # Layer 1 で根拠条文・反則金・委任規定を全て注入済みのため thinking は不要。
+                # 有効のままだと Gemini 3 Flash で 1 リクエスト 5 分かかる (#10)。
+                "thinking_config": {"thinking_budget": 0},
             },
         )
         elapsed_ms = (time.monotonic_ns() - start) // 1_000_000

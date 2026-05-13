@@ -142,6 +142,7 @@ class JudgeService:
             config={
                 "system_instruction": LLM_ONLY_SYSTEM_PROMPT,
                 "temperature": 0.0,
+                "thinking_config": {"thinking_budget": 0},
             },
         )
         elapsed_ms = (time.monotonic_ns() - start) // 1_000_000
@@ -216,6 +217,7 @@ class JudgeService:
                 "system_instruction": WEB_SEARCH_SYSTEM_PROMPT,
                 "temperature": 0.0,
                 "tools": [{"google_search": {}}],
+                "thinking_config": {"thinking_budget": 0},
             },
         )
         elapsed_ms = (time.monotonic_ns() - start) // 1_000_000
