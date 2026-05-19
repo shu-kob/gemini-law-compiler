@@ -10,7 +10,13 @@ import math
 
 import pytest
 
-from src.matcher.vsm_engine import VSMEngine, VSMMatch, tokenize
+from src.matcher.vsm_engine import (
+    VSMEngine,
+    VSMMatch,
+    _hybrid_combine,
+    _minmax_normalize,
+    tokenize,
+)
 from src.parser.legal_compiler import LawAST
 
 
@@ -166,3 +172,134 @@ class TestVSMEngineSearch:
             assert idf >= 1.0
             # 最大値も妥当な範囲
             assert idf <= math.log(n) + 1.0 + 1e-9
+
+
+# ---------------------------------------------------------------------------
+# Hybrid score helpers: _minmax_normalize / _hybrid_combine
+# ---------------------------------------------------------------------------
+class TestMinMaxNormalize:
+    def test_empty_list_returns_empty(self) -> None:
+        assert _minmax_normalize([]) == []
+
+    def test_all_same_values_returns_zeros(self) -> None:
+        # min == max のとき span=0 で zero ベクトルにフォールバック
+        assert _minmax_normalize([0.5, 0.5, 0.5]) == [0.0, 0.0, 0.0]
+
+    def test_scales_to_unit_interval(self) -> None:
+        out = _minmax_normalize([1.0, 2.0, 3.0])
+        assert out == [0.0, 0.5, 1.0]
+
+    def test_preserves_relative_order(self) -> None:
+        values = [0.14, 0.27, 0.18, 0.09]
+        out = _minmax_normalize(values)
+        # 順序は不変
+        original_rank = sorted(range(len(values)), key=lambda i: values[i])
+        normalized_rank = sorted(range(len(out)), key=lambda i: out[i])
+        assert original_rank == normalized_rank
+
+
+class TestHybridCombine:
+    def test_alpha_one_keeps_tfidf_ranking(self) -> None:
+        # α=1.0 では embedding スコアは無視され、TF-IDF と同順位
+        tfidf = [0.3, 0.1, 0.2]
+        emb = [0.9, 0.8, 0.7]
+        combined = _hybrid_combine(tfidf, emb, alpha=1.0)
+        # TF-IDF の rank: 0 > 2 > 1
+        assert combined[0] > combined[2] > combined[1]
+
+    def test_alpha_zero_keeps_embedding_ranking(self) -> None:
+        tfidf = [0.3, 0.1, 0.2]
+        emb = [0.5, 0.9, 0.7]
+        combined = _hybrid_combine(tfidf, emb, alpha=0.0)
+        # embedding の rank: 1 > 2 > 0
+        assert combined[1] > combined[2] > combined[0]
+
+    def test_normalization_protects_against_scale_difference(self) -> None:
+        # TF-IDF は 0.1〜0.3、embedding は 0.6〜0.8 で全体スケールが違う。
+        # 単純加重和なら常に embedding が支配するが、min-max 正規化により
+        # 「相対的に低スコアな embedding」<「相対的に高スコアな TF-IDF」を実現可能。
+        tfidf = [0.3, 0.1]  # idx0 が圧倒的に強い (TF-IDF 視点)
+        emb = [0.6, 0.7]   # idx1 がやや強い (embedding 視点)
+        # α=0.7 なら TF-IDF 寄り → idx0 勝ち
+        combined = _hybrid_combine(tfidf, emb, alpha=0.7)
+        assert combined[0] > combined[1]
+
+    def test_mismatched_lengths_fall_back_to_tfidf(self) -> None:
+        # embedding 側が落ちている異常系では TF-IDF にフォールバック
+        tfidf = [0.3, 0.1, 0.2]
+        emb = [0.5]
+        combined = _hybrid_combine(tfidf, emb, alpha=0.5)
+        assert combined == tfidf
+
+
+# ---------------------------------------------------------------------------
+# VSMEngine: ハイブリッドモード (embedding_engine 注入)
+# ---------------------------------------------------------------------------
+class _StubEmbeddingEngine:
+    """テスト用の固定 cos 類似度を返すスタブ。"""
+
+    def __init__(self, scores_per_query: dict[str, list[float]]):
+        self._scores = scores_per_query
+
+    def cosine_similarities(self, query: str) -> list[float]:
+        return self._scores.get(query, [])
+
+
+class TestHybridSearch:
+    def test_is_hybrid_flag_reflects_embedding_engine(
+        self, sample_ast: LawAST, sample_bicycle_articles
+    ) -> None:
+        vsm_tfidf = VSMEngine(sample_ast, article_filter=sample_bicycle_articles)
+        assert vsm_tfidf.is_hybrid is False
+
+        n = len(sample_bicycle_articles)
+        stub = _StubEmbeddingEngine({"q": [0.0] * n})
+        vsm_hybrid = VSMEngine(
+            sample_ast,
+            article_filter=sample_bicycle_articles,
+            embedding_engine=stub,
+            alpha=0.5,
+        )
+        assert vsm_hybrid.is_hybrid is True
+
+    def test_alpha_one_disables_hybrid(
+        self, sample_ast: LawAST, sample_bicycle_articles
+    ) -> None:
+        # alpha=1.0 では embedding は使われず、is_hybrid は False
+        n = len(sample_bicycle_articles)
+        stub = _StubEmbeddingEngine({"q": [0.0] * n})
+        vsm = VSMEngine(
+            sample_ast,
+            article_filter=sample_bicycle_articles,
+            embedding_engine=stub,
+            alpha=1.0,
+        )
+        assert vsm.is_hybrid is False
+
+    def test_embedding_boost_changes_ranking(
+        self, sample_ast: LawAST, sample_bicycle_articles
+    ) -> None:
+        # TF-IDF では 1 位にならないが embedding では 1 位になる条文を、
+        # ハイブリッド合成で top に押し上げられることを確認する。
+        query = "ながらスマホ運転"
+
+        vsm_tfidf = VSMEngine(sample_ast, article_filter=sample_bicycle_articles)
+        tfidf_top = vsm_tfidf.search(query, top_k=1)
+        assert tfidf_top
+
+        # スタブ embedding は TF-IDF top と別の条文に最高スコアを付ける
+        target_idx = (0 if sample_bicycle_articles[0].num != tfidf_top[0].article.num
+                      else 1)
+        n = len(sample_bicycle_articles)
+        emb_scores = [0.5] * n
+        emb_scores[target_idx] = 0.99  # 強い意味マッチをシミュレート
+
+        stub = _StubEmbeddingEngine({query: emb_scores})
+        vsm_hybrid = VSMEngine(
+            sample_ast,
+            article_filter=sample_bicycle_articles,
+            embedding_engine=stub,
+            alpha=0.0,  # 完全に embedding 主導
+        )
+        hybrid_top = vsm_hybrid.search(query, top_k=1)
+        assert hybrid_top[0].article.num == sample_bicycle_articles[target_idx].num

@@ -14,6 +14,11 @@ import json
 import time
 from dataclasses import dataclass
 
+# Vertex AI / Anthropic レート制限 (429) のときのリトライ設定。
+# クオータバーストに当たると指数バックオフで自動回復させる。
+_MAX_RETRIES = 5
+_INITIAL_BACKOFF_SECONDS = 4.0
+
 from src.config import GEMINI_FLASH_MODEL, GEMINI_PRO_MODEL, FINE_TABLE_PATH, get_llm_client
 from src.parser.legal_compiler import (
     LawAST,
@@ -75,7 +80,9 @@ class HybridJudge:
             print(f"[Hybrid-Judge]: クエリ受付「{query}」")
             print(f"[2008-Thesis-Logic]: Layer 1 起動... cos類似度検索開始")
 
-        vsm_matches = self._vsm.search(query, top_k=3)
+        # Layer 1 が口語クエリで取りこぼすのを救うため top_k=5 で多めに渡す
+        # （ハイブリッドスコアでも語彙ギャップは完全には消えないため）。
+        vsm_matches = self._vsm.search(query, top_k=5)
 
         if verbose:
             for m in vsm_matches:
@@ -128,17 +135,7 @@ class HybridJudge:
         prompt = self._build_prompt(query, combined_text, fine_info, unique_flags)
 
         start = time.monotonic_ns()
-        response = self._client.models.generate_content(
-            model=self._model,
-            contents=prompt,
-            config={
-                "system_instruction": HYBRID_SYSTEM_PROMPT,
-                "temperature": 0.0,
-                # Layer 1 で根拠条文・反則金・委任規定を全て注入済みのため thinking は不要。
-                # 有効のままだと Gemini 3 Flash で 1 リクエスト 5 分かかる (#10)。
-                "thinking_config": {"thinking_budget": 0},
-            },
-        )
+        response = self._generate_with_retry(prompt, verbose=verbose)
         elapsed_ms = (time.monotonic_ns() - start) // 1_000_000
 
         gemini_answer = response.text or "(empty response)"
@@ -158,6 +155,43 @@ class HybridJudge:
             self._print_soul_log(result)
 
         return result
+
+    def _generate_with_retry(self, prompt: str, verbose: bool = False):
+        """Layer 2 LLM 呼び出しを 429 リトライ付きで実行する。"""
+        last_exc: Exception | None = None
+        for attempt in range(_MAX_RETRIES):
+            try:
+                return self._client.models.generate_content(
+                    model=self._model,
+                    contents=prompt,
+                    config={
+                        "system_instruction": HYBRID_SYSTEM_PROMPT,
+                        "temperature": 0.0,
+                        # Layer 1 で根拠条文・反則金・委任規定を全て注入済みのため
+                        # thinking は不要。有効のままだと Gemini 3 Flash で
+                        # 1 リクエスト 5 分かかる (#10)。
+                        "thinking_config": {"thinking_budget": 0},
+                    },
+                )
+            except Exception as e:
+                msg = str(e)
+                is_rate_limit = (
+                    "429" in msg
+                    or "RESOURCE_EXHAUSTED" in msg
+                    or "rate_limit" in msg.lower()
+                    or "ratelimit" in msg.lower()
+                )
+                last_exc = e
+                if not is_rate_limit or attempt == _MAX_RETRIES - 1:
+                    raise
+                delay = _INITIAL_BACKOFF_SECONDS * (2 ** attempt)
+                if verbose:
+                    print(f"[Retry]: 429/rate-limit 検知。{delay:.0f}s 待機後リトライ "
+                          f"({attempt + 1}/{_MAX_RETRIES})", flush=True)
+                time.sleep(delay)
+        # 到達不能だが型のため
+        assert last_exc is not None
+        raise last_exc
 
     def _build_prompt(
         self,

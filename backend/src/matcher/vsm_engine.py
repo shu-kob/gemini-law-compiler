@@ -4,6 +4,11 @@ Task 3: 2008年式 Vector Space Model (VSM) コサイン類似度エンジン
 卒論ロジックの実装:
   入力事例をTF-IDFベクトル化し、全条文の中でcos類似度が最も高い条文を特定する。
   外部ライブラリ不使用 — 純粋なPythonとmathのみで2008年の精神を再現。
+
+オプションのハイブリッドモード:
+  TF-IDF (語彙一致) と Vertex AI Embedding (意味距離) を min-max 正規化後に
+  加重和してスコアを出す。alpha=0.5 がデフォルトで、TF-IDF と embedding を
+  半々で混ぜる。alpha=1.0 で純 TF-IDF (2008 年式) に戻る。
 """
 
 from __future__ import annotations
@@ -67,14 +72,37 @@ class VSMMatch:
 
 
 class VSMEngine:
-    """2008年式 TF-IDF cos類似度検索エンジン"""
+    """2008年式 TF-IDF cos類似度検索エンジン（オプションで embedding ハイブリッド）"""
 
-    def __init__(self, ast: LawAST, article_filter: list[ArticleNode] | None = None):
+    def __init__(
+        self,
+        ast: LawAST,
+        article_filter: list[ArticleNode] | None = None,
+        embedding_engine=None,
+        alpha: float = 0.3,
+    ):
+        """
+        Args:
+            ast: パース済み法令 AST
+            article_filter: 検索対象に絞り込む条文リスト（None で全条文）
+            embedding_engine: 意味埋め込みエンジン（None で TF-IDF 単体）
+            alpha: TF-IDF の重み (0.0=embedding のみ, 1.0=TF-IDF のみ)。
+                デフォルト 0.3 は embedding 主・TF-IDF 補助。これは TC-003
+                のような口語クエリ（「スマホ」⇄「無線通信のために用いられる
+                装置」のような語彙ギャップ）で TF-IDF だけでは取りこぼした
+                条文（第71条）を救うためのチューニング値。
+        """
         self._articles = article_filter if article_filter is not None else ast.articles
         self._doc_tokens: list[list[str]] = []
         self._idf: dict[str, float] = {}
         self._doc_tfidf: list[dict[str, float]] = []
+        self._embedding_engine = embedding_engine
+        self._alpha = alpha
         self._build_index()
+
+    @property
+    def is_hybrid(self) -> bool:
+        return self._embedding_engine is not None and self._alpha < 1.0
 
     def _build_index(self) -> None:
         n = len(self._articles)
@@ -107,7 +135,34 @@ class VSMEngine:
             self._doc_tfidf.append(tfidf)
 
     def search(self, query: str, top_k: int = 5) -> list[VSMMatch]:
-        """クエリに最も類似する条文をcos類似度で検索する"""
+        """クエリに最も類似する条文を cos 類似度で検索する。
+
+        embedding_engine が渡されており alpha < 1.0 なら、TF-IDF と
+        embedding の cos を min-max 正規化してから alpha 加重和でスコアを出す。
+        """
+        tfidf_scores = self._tfidf_scores(query)
+        if not tfidf_scores:
+            return []
+
+        if self.is_hybrid:
+            emb_scores = self._embedding_engine.cosine_similarities(query)
+            scores = _hybrid_combine(tfidf_scores, emb_scores, self._alpha)
+        else:
+            scores = tfidf_scores
+
+        ranked = sorted(enumerate(scores), key=lambda x: x[1], reverse=True)
+
+        results = []
+        for rank, (idx, score) in enumerate(ranked[:top_k], 1):
+            results.append(VSMMatch(
+                article=self._articles[idx],
+                score=round(score, 6),
+                rank=rank,
+            ))
+        return results
+
+    def _tfidf_scores(self, query: str) -> list[float]:
+        """全条文に対する TF-IDF cos 類似度を返す。条文と同じ順序。"""
         q_tokens = tokenize(query)
         if not q_tokens:
             return []
@@ -118,21 +173,9 @@ class VSMEngine:
             t: (count / q_total) * self._idf.get(t, 1.0) for t, count in q_tf.items()
         }
 
-        scores: list[tuple[int, float]] = []
-        for i, doc_vec in enumerate(self._doc_tfidf):
-            score = self._cosine_similarity(q_tfidf, doc_vec)
-            scores.append((i, score))
-
-        scores.sort(key=lambda x: x[1], reverse=True)
-
-        results = []
-        for rank, (idx, score) in enumerate(scores[:top_k], 1):
-            results.append(VSMMatch(
-                article=self._articles[idx],
-                score=round(score, 6),
-                rank=rank,
-            ))
-        return results
+        return [
+            self._cosine_similarity(q_tfidf, doc_vec) for doc_vec in self._doc_tfidf
+        ]
 
     @staticmethod
     def _cosine_similarity(a: dict[str, float], b: dict[str, float]) -> float:
@@ -149,6 +192,37 @@ class VSMEngine:
         if norm_a == 0 or norm_b == 0:
             return 0.0
         return dot / (norm_a * norm_b)
+
+
+def _minmax_normalize(values: list[float]) -> list[float]:
+    """値を [0, 1] に正規化する。すべて同値なら 0 を返す。"""
+    if not values:
+        return []
+    lo = min(values)
+    hi = max(values)
+    span = hi - lo
+    if span <= 0:
+        return [0.0] * len(values)
+    return [(v - lo) / span for v in values]
+
+
+def _hybrid_combine(
+    tfidf_scores: list[float],
+    emb_scores: list[float],
+    alpha: float,
+) -> list[float]:
+    """TF-IDF と embedding の cos を min-max 正規化してから alpha 加重和する。
+
+    TF-IDF は 0.1〜0.4、embedding は 0.6〜0.8 のように分布が異なるため、
+    生スコアを直接加重和すると常に embedding 側が支配する。条文内での
+    相対順序を保ったまま [0, 1] に揃えてから混ぜる。
+    """
+    if len(tfidf_scores) != len(emb_scores):
+        # embedding 側が空など想定外。TF-IDF にフォールバック。
+        return tfidf_scores
+    t_norm = _minmax_normalize(tfidf_scores)
+    e_norm = _minmax_normalize(emb_scores)
+    return [alpha * t + (1.0 - alpha) * e for t, e in zip(t_norm, e_norm)]
 
 
 if __name__ == "__main__":
