@@ -36,15 +36,12 @@ if not GEMINI_PROVIDER:
         GEMINI_PROVIDER = "ai_studio"
 
 # Gemini モデル設定（Gemini 3.7 Flash / Gemini 3.1 Pro / 環境変数で上書き可能）
-if GEMINI_PROVIDER == "vertex":
-    DEFAULT_FLASH = "gemini-3-flash-preview"
-    DEFAULT_PRO = "gemini-3.1-pro-preview"
-else:
-    DEFAULT_FLASH = "gemini-3.7-flash"
-    DEFAULT_PRO = "gemini-3.1-pro-preview"
+DEFAULT_FLASH = "gemini-3.7-flash"
+DEFAULT_PRO = "gemini-3.1-pro-preview"
 
 GEMINI_FLASH_MODEL = os.environ.get("GEMINI_FLASH_MODEL", DEFAULT_FLASH)
 GEMINI_PRO_MODEL = os.environ.get("GEMINI_PRO_MODEL", DEFAULT_PRO)
+
 
 # ローカルLLM設定（Ollama 経由）
 GEMMA3_MODEL = "gemma3:4b"
