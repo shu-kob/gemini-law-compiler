@@ -32,7 +32,12 @@ from src.benchmark.flash_only_judge import (
     print_summary,
     TEST_CASES,
 )
+from src.benchmark.matrix_benchmark import (
+    run_matrix_benchmark,
+    print_matrix_summary,
+)
 from src.judgement.hybrid_judge import HybridJudge
+
 
 
 BANNER = r"""
@@ -159,6 +164,15 @@ def cmd_compare(model: str, use_embedding: bool = True) -> None:
     print("[Hybrid-Result]: 決定論的パース × LLM推論 = 精度100%への回帰。")
 
 
+def cmd_matrix(model: str = GEMINI_FLASH_MODEL, limit: int | None = None) -> None:
+    """前処理（あり/なし） × 推論Thinking（あり/なし）の2×2マトリクス比較検証"""
+    print(f"\n[MODE]: 2×2 マトリクス検証 (前処理 × Thinking, model={model})")
+    print("[2026-AI-Logic]: 4パターン（①生×推論OFF, ②生×推論ON, ③前処理×推論ON, ④前処理×推論OFF）を比較します...\n")
+
+    results = run_matrix_benchmark(model=model, limit=limit, verbose=True)
+    print_matrix_summary(results)
+
+
 def main() -> None:
     print(BANNER)
 
@@ -178,6 +192,14 @@ def main() -> None:
         help="Flash単体 vs ハイブリッドの比較実行",
     )
     parser.add_argument(
+        "--matrix", action="store_true",
+        help="2×2 マトリクス検証（前処理あり/なし × 推論あり/なし 4パターン比較）",
+    )
+    parser.add_argument(
+        "--limit", type=int, default=None,
+        help="テストケースの実行件数上限（未指定時は全件）",
+    )
+    parser.add_argument(
         "--model",
         choices=["flash", "pro", "gemma3", "claude", "claude_sonnet"],
         default="flash",
@@ -188,7 +210,7 @@ def main() -> None:
     parser.add_argument(
         "--no-embedding", action="store_true",
         help="Layer 1 を純 TF-IDF (2008年式) で動かす。"
-             "デフォルトは Vertex AI Embedding と合成したハイブリッドモード。",
+             "デフォルトは Embedding と合成したハイブリッドモード。",
     )
 
     args = parser.parse_args()
@@ -202,7 +224,9 @@ def main() -> None:
 
     use_embedding = not args.no_embedding
 
-    if args.benchmark:
+    if args.matrix:
+        cmd_matrix(model, limit=args.limit)
+    elif args.benchmark:
         cmd_benchmark(model)
     elif args.hybrid:
         cmd_hybrid(model, use_embedding=use_embedding)
@@ -211,9 +235,11 @@ def main() -> None:
     else:
         parser.print_help()
         print("\n使用例:")
+        print("  python -m src.main --matrix           # 2×2 マトリクス検証（前処理 × 推論ON/OFF 4パターン）")
         print("  python -m src.main --benchmark        # Flash単体テスト")
-        print("  python -m src.main --hybrid            # ハイブリッド判定")
-        print("  python -m src.main --compare           # 比較（ブログ用）")
+        print("  python -m src.main --hybrid           # ハイブリッド判定")
+        print("  python -m src.main --compare          # 比較（ブログ用）")
+        print("  python -m src.main --matrix --limit 3 # 最初の3件のみマトリクス検証")
         print("  python -m src.main --hybrid --model pro  # Proモデル使用")
         print("  python -m src.main --hybrid --model gemma3  # ローカル gemma3:4b 使用")
         print("  python -m src.main --hybrid --model claude          # Claude Opus 4.7 使用 (Vertex AI)")
@@ -222,3 +248,4 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
