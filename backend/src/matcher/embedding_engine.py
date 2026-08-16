@@ -13,11 +13,13 @@ from __future__ import annotations
 
 import math
 
+from src.config import GEMINI_PROVIDER
 from src.parser.legal_compiler import ArticleNode, LawAST, flatten_article_text
 
-DEFAULT_EMBEDDING_MODEL = "text-multilingual-embedding-002"
+DEFAULT_AI_STUDIO_EMBEDDING_MODEL = "text-embedding-004"
+DEFAULT_VERTEX_EMBEDDING_MODEL = "text-multilingual-embedding-002"
 
-# 1 リクエストあたりの最大テキスト数（Vertex AI Embedding の制約は 250）。
+# 1 リクエストあたりの最大テキスト数。
 # 小さめに切って遅延と失敗耐性のバランスを取る。
 _BATCH_SIZE = 25
 
@@ -26,19 +28,26 @@ _MAX_CHARS_PER_TEXT = 8000
 
 
 class EmbeddingEngine:
-    """Vertex AI Embedding で条文をベクトル化し、cos 類似度を返すエンジン。"""
+    """Gemini Embedding (AI Studio / Vertex AI) で条文をベクトル化し、cos 類似度を返すエンジン。"""
 
     def __init__(
         self,
         ast: LawAST,
         article_filter: list[ArticleNode] | None = None,
-        model: str = DEFAULT_EMBEDDING_MODEL,
+        model: str | None = None,
     ) -> None:
         self._articles = article_filter if article_filter is not None else ast.articles
+        if model is None:
+            model = (
+                DEFAULT_VERTEX_EMBEDDING_MODEL
+                if GEMINI_PROVIDER == "vertex"
+                else DEFAULT_AI_STUDIO_EMBEDDING_MODEL
+            )
         self._model = model
         self._client = None
         self._doc_embeddings: list[list[float]] = []
         self._build_index()
+
 
     @property
     def articles(self) -> list[ArticleNode]:

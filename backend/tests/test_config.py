@@ -143,14 +143,61 @@ class TestGetLlmClient:
 
 
 # ---------------------------------------------------------------------------
-# get_genai_client: VERTEX_PROJECT 未設定時のガード
+# get_genai_client: AI Studio / Vertex AI 各モードのテスト
 # ---------------------------------------------------------------------------
 class TestGetGenaiClient:
-    def test_missing_project_id_raises(self, monkeypatch: pytest.MonkeyPatch) -> None:
+    def test_missing_api_key_raises_in_ai_studio_mode(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.setattr(config, "GEMINI_PROVIDER", "ai_studio")
+        monkeypatch.setattr(config, "GEMINI_API_KEY", None)
+        with pytest.raises(RuntimeError) as ei:
+            config.get_genai_client()
+        assert "GEMINI_API_KEY" in str(ei.value)
+
+    def test_ai_studio_client_initialization(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        import google.genai as genai
+        captured_kwargs = {}
+
+        def fake_client(**kwargs):
+            captured_kwargs.update(kwargs)
+            return "fake-ai-studio-client"
+
+        monkeypatch.setattr(genai, "Client", fake_client)
+        monkeypatch.setattr(config, "GEMINI_PROVIDER", "ai_studio")
+        monkeypatch.setattr(config, "GEMINI_API_KEY", "test-api-key")
+
+        client = config.get_genai_client()
+        assert client == "fake-ai-studio-client"
+        assert captured_kwargs == {"api_key": "test-api-key"}
+
+    def test_missing_project_id_raises_in_vertex_mode(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.setattr(config, "GEMINI_PROVIDER", "vertex")
         monkeypatch.setattr(config, "VERTEX_PROJECT", "")
         with pytest.raises(RuntimeError) as ei:
             config.get_genai_client()
         assert "GOOGLE_CLOUD_PROJECT" in str(ei.value)
+
+    def test_vertex_client_initialization(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        import google.genai as genai
+        captured_kwargs = {}
+
+        def fake_client(**kwargs):
+            captured_kwargs.update(kwargs)
+            return "fake-vertex-client"
+
+        monkeypatch.setattr(genai, "Client", fake_client)
+        monkeypatch.setattr(config, "GEMINI_PROVIDER", "vertex")
+        monkeypatch.setattr(config, "VERTEX_PROJECT", "test-project")
+        monkeypatch.setattr(config, "VERTEX_LOCATION", "global")
+
+        client = config.get_genai_client()
+        assert client == "fake-vertex-client"
+        assert captured_kwargs == {
+            "vertexai": True,
+            "project": "test-project",
+            "location": "global",
+        }
+
+
 
 
 # ---------------------------------------------------------------------------

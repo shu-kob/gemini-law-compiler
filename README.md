@@ -5,8 +5,9 @@
 ## 概要
 
 2026年4月1日施行の**自転車交通反則通告制度（青切符）**（令和6年法律第34号）を題材に、
-最新LLM（Gemini Flash/Pro）が法規判定で陥る「もっともらしい嘘（ハルシネーション）」を、
+最新LLM（Gemini 3.7 Flash / Gemini 3.1 Pro）が法規判定で陥る「もっともらしい嘘（ハルシネーション）」を、
 2008年当時の卒論技術（決定論的パース + コサイン類似度）で検出・矯正するハイブリッドシステム。
+
 
 ## アーキテクチャ
 
@@ -48,8 +49,7 @@
 ### 前提条件
 
 - Python 3.11+
-- Google Cloud プロジェクト（Vertex AI API有効）
-- gcloud CLI（ADC認証済み）
+- **Google AI Studio API Key**（デフォルト推奨）または Google Cloud プロジェクト（Vertex AI利用時）
 
 ### インストール
 
@@ -63,14 +63,29 @@ cd frontend && npm install && cd ..
 
 ### 認証設定
 
-Vertex AI (ADC) 経由で接続します。Gemini 3系モデルは `location=global` で動作します。
+#### 1. Google AI Studio（デフォルト・推奨）
+
+プロジェクト直下に `.env` を作成し、Gemini API Key を設定します:
+
+```bash
+echo "GEMINI_API_KEY=your-gemini-api-key" > .env
+```
+
+#### 2. Vertex AI（オプション）
+
+Google Cloud Vertex AI 経由で実行したい場合は `.env` で `GEMINI_PROVIDER=vertex` を指定します:
+
+```bash
+# .env
+GEMINI_PROVIDER=vertex
+GOOGLE_CLOUD_PROJECT=YOUR_PROJECT_ID
+GOOGLE_CLOUD_LOCATION=global
+```
 
 ```bash
 gcloud auth application-default login --scopes="https://www.googleapis.com/auth/cloud-platform"
 gcloud auth application-default set-quota-project YOUR_PROJECT_ID
 ```
-
-> **注意**: `GOOGLE_APPLICATION_CREDENTIALS` 環境変数にサービスアカウントキーが設定されていると、ADCよりも優先されて権限エラーになる場合があります。本ツールは起動時にこの環境変数を自動的に除外してADCを使用します。
 
 ### 法令データ取得
 
@@ -88,10 +103,16 @@ curl -o backend/data/road_traffic_act_full.xml \
 ```bash
 cd backend
 
+# 【注目】2×2 マトリクス検証（前処理あり/なし × 推論あり/なし の4パターン比較）
+python -m src.main --matrix
+
+# 件数を絞ってマトリクス検証（例: 最初の2件）
+python -m src.main --matrix --limit 2
+
 # Flash単体ベンチマーク（ハルシネーション観測）
 python -m src.main --benchmark
 
-# ハイブリッド判定
+# ハイブリッド判定（Layer 1 決定論的処理 + Layer 2 確定的生成）
 python -m src.main --hybrid
 
 # Flash単体 vs ハイブリッド比較（ブログ用）
@@ -100,9 +121,23 @@ python -m src.main --compare
 # Proモデル使用
 python -m src.main --hybrid --model pro
 
-# Claude Opus 4.7 使用（要 ANTHROPIC_API_KEY）
+# Claude Opus 4.7 使用（要 Vertex AI）
 python -m src.main --hybrid --model claude
 ```
+
+## 2×2 マトリクス検証（前処理 × 推論 Thinking）
+
+決定論的前処理とLLMの推論（Thinking Budget）を掛け合わせた4パターンを同一テストケースでベンチマーク計測します。
+
+| パターン | 入力（前処理） | LLM側（Thinking） | 想定挙動・仮説 |
+|---|---|---|---|
+| **① 生テキスト × 推論なし** | 生の条文 | OFF (Budget=0) | 【最弱】参照ジャンプや多段ネストを追いきれず、読み落とし・ハルシネーション多発。 |
+| **② 生テキスト × 推論あり** | 生の条文 | ON (Budget=2048) | 【力技】推論で参照を自力解決しようとするが、トークン爆発＆途中で論理破綻のリスク。 |
+| **③ 前処理済み × 推論あり** | 構造化・参照解決済み | ON (Budget=2048) | 【過剰推論】確定情報があるのに自問自答を挟み、レイテンシとコストが無駄に増大。 |
+| **④ 前処理済み × 推論なし** | 構造化・参照解決済み | OFF (Budget=0) | **【本命】最速・最安・最高精度。** 決定論的な評価器として最も安定して機能。 |
+
+実行結果はターミナルへのサマリー表示のほか、`backend/results/matrix_benchmark_<timestamp>.md` および `.json` に自動出力されます。
+
 
 ### Web UI（Next.js + FastAPI）
 
