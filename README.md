@@ -51,6 +51,8 @@
 | モデルキー (`--model`) | モデル名 / バージョン | プロバイダ / 実行基盤 | デフォルト識別子 | グラウンディング対応 | 必要な認証 / 設定 |
 |---|---|---|---|:---:|---|
 | **`flash`** *(デフォルト)* | **Gemini 3.7 Flash** | Google AI Studio / Vertex AI | `gemini-3.7-flash` | Layer 1 / Web Search / なし | `GEMINI_API_KEY` または GCP ADC |
+| **`flash_3_8`** | **Gemini 3.8 Flash** | Google AI Studio / Vertex AI | `gemini-3.8-flash` | Layer 1 / Web Search / なし | `GEMINI_API_KEY` または GCP ADC |
+| **`flash_lite`** | **Gemini 3.5 Flash-Lite** | Google AI Studio / Vertex AI | `gemini-3.5-flash-lite` | Layer 1 / Web Search / なし | `GEMINI_API_KEY` または GCP ADC |
 | **`pro`** | **Gemini 3.1 Pro** | Google AI Studio / Vertex AI | `gemini-3.1-pro-preview` | Layer 1 / Web Search / なし | `GEMINI_API_KEY` または GCP ADC |
 | **`claude`** | **Claude Opus 4.7** | Google Cloud Vertex AI | `claude-opus-4-7@default` | Layer 1 / なし | GCP ADC（Model Gardenで承諾要） |
 | **`claude_sonnet`** | **Claude Sonnet 4.6** | Google Cloud Vertex AI | `claude-sonnet-4-6@default` | Layer 1 / なし | GCP ADC（Model Gardenで承諾要） |
@@ -58,9 +60,10 @@
 | *その他ローカル* | **Llama / Qwen / Mistral / Phi** | Ollama (ローカルLLM) | 各モデル名 | Layer 1 / なし | なし（Ollama サーバー起動のみ） |
 
 > [!NOTE]
-> - **モデルIDの上書き**: Geminiモデルは環境変数 `GEMINI_FLASH_MODEL`, `GEMINI_PRO_MODEL` で任意のバージョン（例: `gemini-2.5-flash` など）に上書き可能です。
-> - **Web Search グラウンディング**: Gemini の Google Search ツールを利用するため、`flash` / `pro` のみ対応しています。
+> - **モデルIDの上書き**: Geminiモデルは環境変数 `GEMINI_FLASH_MODEL`, `GEMINI_3_8_FLASH_MODEL`, `GEMINI_3_5_FLASH_LITE_MODEL`, `GEMINI_PRO_MODEL` で任意のバージョンに上書き可能です。
+> - **Web Search グラウンディング**: Gemini の Google Search ツールを利用するため、Gemini 系モデル (`flash` / `flash_3_8` / `flash_lite` / `pro`) のみ対応しています。
 > - **意味ベクトル検索（Embedding）**: Layer 1 の条文検索補助には `text-embedding-004` (AI Studio) または `text-multilingual-embedding-002` (Vertex AI) を自動使用します。
+
 
 ---
 
@@ -195,6 +198,12 @@ python -m src.main --matrix --model pro --limit 2
 # Gemini 3.7 Flash（デフォルト）
 python -m src.main --hybrid
 
+# Gemini 3.8 Flash
+python -m src.main --hybrid --model flash_3_8
+
+# Gemini 3.5 Flash-Lite
+python -m src.main --hybrid --model flash_lite
+
 # Gemini 3.1 Pro
 python -m src.main --hybrid --model pro
 
@@ -238,11 +247,12 @@ npm run dev
 
 ブラウザで `http://localhost:3000` にアクセスします。
 
-- **モデル選択**: Gemini 3 Flash / Gemini 3.1 Pro / Gemma 3 / Claude Opus 4.7 / Claude Sonnet 4.6
+- **モデル選択**: Gemini 3.7 Flash / Gemini 3.8 Flash / Gemini 3.5 Flash-Lite / Gemini 3.1 Pro / Gemma 3 / Claude Opus 4.7 / Claude Sonnet 4.6
 - **グラウンディングモード**:
   - `llm_only`: LLM単体（グラウンディングなし）
   - `layer1`: Layer 1 決定論的グラウンディング（本プロジェクトの本命構成）
-  - `web_search`: Google Search グラウンディング（Geminiのみ対応）
+  - `web_search`: Google Search グラウンディング（Gemini系モデルのみ対応）
+
 
 ---
 
