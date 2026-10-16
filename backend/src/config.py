@@ -2,6 +2,7 @@
 
 import os
 from pathlib import Path
+from typing import Any
 
 from dotenv import load_dotenv
 
@@ -35,11 +36,12 @@ if not GEMINI_PROVIDER:
     else:
         GEMINI_PROVIDER = "ai_studio"
 
-# Gemini モデル設定（Gemini 3.7 Flash / Gemini 3.8 Flash / Gemini 3.5 Flash-Lite / Gemini 3.1 Pro / 環境変数で上書き可能）
+# Gemini モデル設定（Gemini 4 Argon / Gemini 3.7 Flash / Gemini 3.8 Flash / Gemini 3.5 Flash-Lite / Gemini 3.1 Pro / 環境変数で上書き可能）
 DEFAULT_FLASH = "gemini-3.7-flash"
 DEFAULT_PRO = "gemini-3.1-pro-preview"
 DEFAULT_3_8_FLASH = "gemini-3.8-flash"
 DEFAULT_3_5_FLASH_LITE = "gemini-3.5-flash-lite"
+DEFAULT_4_ARGON = "gemini-4-argon"
 
 GEMINI_FLASH_MODEL = os.environ.get("GEMINI_FLASH_MODEL", DEFAULT_FLASH)
 GEMINI_PRO_MODEL = os.environ.get("GEMINI_PRO_MODEL", DEFAULT_PRO)
@@ -47,6 +49,28 @@ GEMINI_3_8_FLASH_MODEL = os.environ.get("GEMINI_3_8_FLASH_MODEL", DEFAULT_3_8_FL
 GEMINI_3_5_FLASH_LITE_MODEL = os.environ.get(
     "GEMINI_3_5_FLASH_LITE_MODEL", DEFAULT_3_5_FLASH_LITE
 )
+GEMINI_4_ARGON_MODEL = os.environ.get("GEMINI_4_ARGON_MODEL", DEFAULT_4_ARGON)
+
+
+def uses_thinking_level(model: str) -> bool:
+    """Geminiモデルがthinking_budgetではなくthinking_level（minimal/low/medium/high）を使用するかどうか。"""
+    return "gemini-4" in model or "argon" in model
+
+
+def get_thinking_config(
+    model: str,
+    thinking_enabled: bool = False,
+    thinking_budget: int = 2048,
+) -> dict[str, Any]:
+    """モデルに応じた thinking_config 辞書を生成する。
+
+    Gemini 4 Argon などのモデルは thinking_level (low/high) を要求する。
+    Gemini 3.x / 2.5 などの従来モデルは thinking_budget (0 / 正の整数) を要求する。
+    """
+    if uses_thinking_level(model):
+        return {"thinking_level": "high" if thinking_enabled else "low"}
+    return {"thinking_budget": thinking_budget if thinking_enabled else 0}
+
 
 
 # ローカルLLM設定（Ollama 経由）

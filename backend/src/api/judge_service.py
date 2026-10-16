@@ -24,12 +24,14 @@ from src.config import (
     CLAUDE_SONNET_MODEL,
     GEMINI_3_8_FLASH_MODEL,
     GEMINI_3_5_FLASH_LITE_MODEL,
+    GEMINI_4_ARGON_MODEL,
     GEMINI_FLASH_MODEL,
     GEMINI_PRO_MODEL,
     GEMMA3_MODEL,
     XML_PATH,
     get_genai_client,
     get_llm_client,
+    get_thinking_config,
     is_anthropic_model,
     is_ollama_model,
 )
@@ -42,6 +44,7 @@ SUPPORTED_MODELS: dict[str, str] = {
     "flash": GEMINI_FLASH_MODEL,
     "flash_3_8": GEMINI_3_8_FLASH_MODEL,
     "flash_lite": GEMINI_3_5_FLASH_LITE_MODEL,
+    "argon": GEMINI_4_ARGON_MODEL,
     "pro": GEMINI_PRO_MODEL,
     "gemma3": GEMMA3_MODEL,
     "claude": CLAUDE_MODEL,
@@ -147,7 +150,7 @@ class JudgeService:
             config={
                 "system_instruction": LLM_ONLY_SYSTEM_PROMPT,
                 "temperature": 0.0,
-                "thinking_config": {"thinking_budget": 0},
+                "thinking_config": get_thinking_config(model, thinking_enabled=False),
             },
         )
         elapsed_ms = (time.monotonic_ns() - start) // 1_000_000
@@ -222,7 +225,7 @@ class JudgeService:
                 "system_instruction": WEB_SEARCH_SYSTEM_PROMPT,
                 "temperature": 0.0,
                 "tools": [{"google_search": {}}],
-                "thinking_config": {"thinking_budget": 0},
+                "thinking_config": get_thinking_config(model, thinking_enabled=False),
             },
         )
         elapsed_ms = (time.monotonic_ns() - start) // 1_000_000
