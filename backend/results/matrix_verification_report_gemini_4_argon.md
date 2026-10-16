@@ -1,6 +1,8 @@
 # Gemini 4 Argon 2×2 マトリクス検証レポート
 ## — 次世代推論モデルにおける「前処理 × thinking_level」の挙動とアーキテクチャ特性の解明
 
+- **関連 Pull Request**: [#18 (feat: Gemini 4 Argon サポートおよび 2x2 マトリクス検証レポートの追加)](https://github.com/shu-kob/gemini-law-compiler/pull/18)
+
 ---
 
 ## 1. 検証の背景と目的
