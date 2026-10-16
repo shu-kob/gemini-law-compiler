@@ -51,5 +51,8 @@ drafts/
 # Logs / Results
 *.log
 logs/
-results/
-backend/results/
+/results/
+backend/results/*
+!backend/results/matrix_verification_report_*.md
+
+

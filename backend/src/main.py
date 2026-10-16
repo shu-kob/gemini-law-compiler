@@ -20,10 +20,13 @@ from src.config import (
     XML_PATH,
     GEMINI_FLASH_MODEL,
     GEMINI_PRO_MODEL,
+    GEMINI_3_8_FLASH_MODEL,
+    GEMINI_3_5_FLASH_LITE_MODEL,
     GEMMA3_MODEL,
     CLAUDE_MODEL,
     CLAUDE_SONNET_MODEL,
 )
+
 from src.parser.legal_compiler import parse_egov_xml, extract_bicycle_articles
 from src.matcher.vsm_engine import VSMEngine
 from src.matcher.embedding_engine import EmbeddingEngine
@@ -90,6 +93,10 @@ def cmd_benchmark(model: str = GEMINI_FLASH_MODEL) -> None:
     """LLM単体ベンチマーク"""
     if model == GEMINI_PRO_MODEL:
         label = "Pro"
+    elif model == GEMINI_3_8_FLASH_MODEL:
+        label = "Gemini 3.8 Flash"
+    elif model == GEMINI_3_5_FLASH_LITE_MODEL:
+        label = "Gemini 3.5 Flash-Lite"
     elif model == GEMMA3_MODEL:
         label = "Gemma3 (local)"
     elif model == CLAUDE_MODEL:
@@ -98,6 +105,7 @@ def cmd_benchmark(model: str = GEMINI_FLASH_MODEL) -> None:
         label = "Claude Sonnet 4.6"
     else:
         label = "Flash"
+
     print(f"\n[MODE]: {label}単体ベンチマーク (model={model})")
     print("[2026-AI-Logic]: LLMに法規を丸投げし、ハルシネーションを観測します...\n")
 
@@ -201,9 +209,12 @@ def main() -> None:
     )
     parser.add_argument(
         "--model",
-        choices=["flash", "pro", "gemma3", "claude", "claude_sonnet"],
+        choices=["flash", "flash_3_8", "flash_lite", "pro", "gemma3", "claude", "claude_sonnet"],
         default="flash",
-        help="使用するLLMモデル: flash/pro (Gemini) / gemma3 (ローカル Ollama) / "
+        help="使用するLLMモデル: flash (Gemini 3.7 Flash) / "
+             "flash_3_8 (Gemini 3.8 Flash) / "
+             "flash_lite (Gemini 3.5 Flash-Lite) / "
+             "pro (Gemini 3.1 Pro) / gemma3 (ローカル Ollama) / "
              "claude (Vertex AI 経由 Claude Opus 4.7) / "
              "claude_sonnet (Vertex AI 経由 Claude Sonnet 4.6) (default: flash)",
     )
@@ -216,6 +227,8 @@ def main() -> None:
     args = parser.parse_args()
     model = {
         "flash": GEMINI_FLASH_MODEL,
+        "flash_3_8": GEMINI_3_8_FLASH_MODEL,
+        "flash_lite": GEMINI_3_5_FLASH_LITE_MODEL,
         "pro": GEMINI_PRO_MODEL,
         "gemma3": GEMMA3_MODEL,
         "claude": CLAUDE_MODEL,
@@ -240,10 +253,13 @@ def main() -> None:
         print("  python -m src.main --hybrid           # ハイブリッド判定")
         print("  python -m src.main --compare          # 比較（ブログ用）")
         print("  python -m src.main --matrix --limit 3 # 最初の3件のみマトリクス検証")
-        print("  python -m src.main --hybrid --model pro  # Proモデル使用")
-        print("  python -m src.main --hybrid --model gemma3  # ローカル gemma3:4b 使用")
-        print("  python -m src.main --hybrid --model claude          # Claude Opus 4.7 使用 (Vertex AI)")
-        print("  python -m src.main --hybrid --model claude_sonnet   # Claude Sonnet 4.6 使用 (Vertex AI)")
+        print("  python -m src.main --hybrid --model flash_3_8     # Gemini 3.8 Flash 使用")
+        print("  python -m src.main --hybrid --model flash_lite    # Gemini 3.5 Flash-Lite 使用")
+        print("  python -m src.main --hybrid --model pro           # Proモデル使用")
+        print("  python -m src.main --hybrid --model gemma3        # ローカル gemma3:4b 使用")
+        print("  python -m src.main --hybrid --model claude        # Claude Opus 4.7 使用 (Vertex AI)")
+        print("  python -m src.main --hybrid --model claude_sonnet # Claude Sonnet 4.6 使用 (Vertex AI)")
+
 
 
 if __name__ == "__main__":

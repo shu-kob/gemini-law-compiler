@@ -22,6 +22,8 @@ from src.benchmark.flash_only_judge import SYSTEM_PROMPT as LLM_ONLY_SYSTEM_PROM
 from src.config import (
     CLAUDE_MODEL,
     CLAUDE_SONNET_MODEL,
+    GEMINI_3_8_FLASH_MODEL,
+    GEMINI_3_5_FLASH_LITE_MODEL,
     GEMINI_FLASH_MODEL,
     GEMINI_PRO_MODEL,
     GEMMA3_MODEL,
@@ -38,11 +40,14 @@ from src.parser.legal_compiler import extract_bicycle_articles, parse_egov_xml
 
 SUPPORTED_MODELS: dict[str, str] = {
     "flash": GEMINI_FLASH_MODEL,
+    "flash_3_8": GEMINI_3_8_FLASH_MODEL,
+    "flash_lite": GEMINI_3_5_FLASH_LITE_MODEL,
     "pro": GEMINI_PRO_MODEL,
     "gemma3": GEMMA3_MODEL,
     "claude": CLAUDE_MODEL,
     "claude_sonnet": CLAUDE_SONNET_MODEL,
 }
+
 
 GROUNDING_MODES = ("llm_only", "layer1", "web_search")
 

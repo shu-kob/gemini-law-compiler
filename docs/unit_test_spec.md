@@ -12,6 +12,8 @@
 | `src/matcher/vsm_engine.py` | `tests/test_vsm_engine.py` | TF-IDF cos類似度エンジン |
 | `src/benchmark/flash_only_judge.py` | `tests/test_flash_only_judge.py` | 正答判定とハルシネーション検出（純関数のみ） |
 | `src/judgement/hybrid_judge.py` | `tests/test_hybrid_judge.py` | プロンプト生成と反則金ルックアップ（API非依存部分） |
+| `src/config.py` | `tests/test_config.py` | LLM クライアント・認証振り分け・モデル定数検証 |
+| `src/api/judge_service.py` / `src/api/server.py` | `tests/test_judge_service.py` | モデル解決および API モデル一覧検証 |
 
 ### 対象外（Gemini API 呼び出し部）
 
@@ -21,8 +23,9 @@
 
 ```bash
 pip install -e '.[dev]'         # pytest を含む dev 依存をインストール
-python -m pytest tests/         # 全テスト実行（現在 101 件）
+python -m pytest tests/         # 全テスト実行（現在 187 件）
 python -m pytest tests/ -v      # 詳細表示
+
 ```
 
 ## フィクスチャ

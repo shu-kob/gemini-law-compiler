@@ -207,9 +207,18 @@ class TestModelConstants:
     def test_gemini_constants_have_expected_prefix(self) -> None:
         assert config.GEMINI_FLASH_MODEL.startswith("gemini-")
         assert config.GEMINI_PRO_MODEL.startswith("gemini-")
+        assert config.GEMINI_3_8_FLASH_MODEL.startswith("gemini-")
+        assert config.GEMINI_3_5_FLASH_LITE_MODEL.startswith("gemini-")
+
+    def test_new_gemini_models_are_recognized_as_cloud(self) -> None:
+        assert is_ollama_model(config.GEMINI_3_8_FLASH_MODEL) is False
+        assert is_ollama_model(config.GEMINI_3_5_FLASH_LITE_MODEL) is False
+        assert is_anthropic_model(config.GEMINI_3_8_FLASH_MODEL) is False
+        assert is_anthropic_model(config.GEMINI_3_5_FLASH_LITE_MODEL) is False
 
     def test_gemma_constant_routes_to_ollama(self) -> None:
         assert is_ollama_model(config.GEMMA3_MODEL) is True
 
     def test_claude_constant_routes_to_anthropic(self) -> None:
         assert is_anthropic_model(config.CLAUDE_MODEL) is True
+
