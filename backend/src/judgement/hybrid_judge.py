@@ -19,7 +19,13 @@ from dataclasses import dataclass
 _MAX_RETRIES = 5
 _INITIAL_BACKOFF_SECONDS = 4.0
 
-from src.config import GEMINI_FLASH_MODEL, GEMINI_PRO_MODEL, FINE_TABLE_PATH, get_llm_client
+from src.config import (
+    GEMINI_FLASH_MODEL,
+    GEMINI_PRO_MODEL,
+    FINE_TABLE_PATH,
+    get_llm_client,
+    get_thinking_config,
+)
 from src.parser.legal_compiler import (
     LawAST,
     ArticleNode,
@@ -170,7 +176,9 @@ class HybridJudge:
                         # Layer 1 で根拠条文・反則金・委任規定を全て注入済みのため
                         # thinking は不要。有効のままだと Gemini 3 Flash で
                         # 1 リクエスト 5 分かかる (#10)。
-                        "thinking_config": {"thinking_budget": 0},
+                        "thinking_config": get_thinking_config(
+                            self._model, thinking_enabled=False
+                        ),
                     },
                 )
             except Exception as e:

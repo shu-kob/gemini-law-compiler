@@ -48,7 +48,7 @@ class JudgeRequest(BaseModel):
     query: str = Field(min_length=1, max_length=2000)
     model: str = Field(
         default="flash",
-        description="flash|pro|flash_3_8|flash_lite|gemma3|claude|claude_sonnet",
+        description="flash|pro|flash_3_8|flash_lite|argon|gemma3|claude|claude_sonnet",
     )
     mode: str = Field(default="layer1", description="llm_only|layer1|web_search")
 
@@ -71,6 +71,7 @@ def list_models() -> dict[str, list[ModelInfo]]:
         "flash": "Gemini 3.7 Flash",
         "flash_3_8": "Gemini 3.8 Flash",
         "flash_lite": "Gemini 3.5 Flash-Lite",
+        "argon": "Gemini 4 Argon",
         "pro": "Gemini 3.1 Pro",
         "gemma3": "Gemma3 (Ollama / local)",
         "claude": "Claude Opus 4.7 (Vertex AI)",
@@ -81,7 +82,7 @@ def list_models() -> dict[str, list[ModelInfo]]:
             key=key,
             model_id=model_id,
             label=labels.get(key, key),
-            supports_web_search=key in {"flash", "pro", "flash_3_8", "flash_lite"},
+            supports_web_search=key in {"flash", "pro", "flash_3_8", "flash_lite", "argon"},
         )
         for key, model_id in SUPPORTED_MODELS.items()
     ]

@@ -21,10 +21,12 @@ from typing import Any
 
 from src.config import (
     GEMINI_FLASH_MODEL,
+    GEMINI_4_ARGON_MODEL,
     RESULTS_DIR,
     XML_PATH,
     FINE_TABLE_PATH,
     get_llm_client,
+    get_thinking_config,
 )
 from src.parser.legal_compiler import (
     LawAST,
@@ -155,11 +157,12 @@ class MatrixBenchmarkRunner:
         config: dict[str, Any] = {
             "system_instruction": system_instruction,
             "temperature": 0.0,
+            "thinking_config": get_thinking_config(
+                self.model,
+                thinking_enabled=(thinking_budget > 0),
+                thinking_budget=thinking_budget,
+            ),
         }
-        if thinking_budget > 0:
-            config["thinking_config"] = {"thinking_budget": thinking_budget}
-        else:
-            config["thinking_config"] = {"thinking_budget": 0}
 
         max_retries = 5
         initial_backoff = 2.0

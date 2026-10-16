@@ -17,14 +17,17 @@ def client() -> TestClient:
 def test_supported_models_contain_gemini_3_8_and_3_5_lite() -> None:
     assert "flash_3_8" in SUPPORTED_MODELS
     assert "flash_lite" in SUPPORTED_MODELS
+    assert "argon" in SUPPORTED_MODELS
     assert SUPPORTED_MODELS["flash_3_8"] == "gemini-3.8-flash"
     assert SUPPORTED_MODELS["flash_lite"] == "gemini-3.5-flash-lite"
+    assert SUPPORTED_MODELS["argon"] == "gemini-4-argon"
 
 
 def test_judge_service_resolves_new_models() -> None:
     service = JudgeService()
     assert service.resolve_model("flash_3_8") == "gemini-3.8-flash"
     assert service.resolve_model("flash_lite") == "gemini-3.5-flash-lite"
+    assert service.resolve_model("argon") == "gemini-4-argon"
 
 
 def test_api_models_endpoint_includes_new_models(client: TestClient) -> None:
@@ -40,3 +43,8 @@ def test_api_models_endpoint_includes_new_models(client: TestClient) -> None:
     assert "flash_lite" in models
     assert models["flash_lite"]["model_id"] == "gemini-3.5-flash-lite"
     assert models["flash_lite"]["supports_web_search"] is True
+
+    assert "argon" in models
+    assert models["argon"]["model_id"] == "gemini-4-argon"
+    assert models["argon"]["supports_web_search"] is True
+

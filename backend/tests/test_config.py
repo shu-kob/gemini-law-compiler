@@ -209,16 +209,35 @@ class TestModelConstants:
         assert config.GEMINI_PRO_MODEL.startswith("gemini-")
         assert config.GEMINI_3_8_FLASH_MODEL.startswith("gemini-")
         assert config.GEMINI_3_5_FLASH_LITE_MODEL.startswith("gemini-")
+        assert config.GEMINI_4_ARGON_MODEL.startswith("gemini-")
 
     def test_new_gemini_models_are_recognized_as_cloud(self) -> None:
         assert is_ollama_model(config.GEMINI_3_8_FLASH_MODEL) is False
         assert is_ollama_model(config.GEMINI_3_5_FLASH_LITE_MODEL) is False
+        assert is_ollama_model(config.GEMINI_4_ARGON_MODEL) is False
         assert is_anthropic_model(config.GEMINI_3_8_FLASH_MODEL) is False
         assert is_anthropic_model(config.GEMINI_3_5_FLASH_LITE_MODEL) is False
+        assert is_anthropic_model(config.GEMINI_4_ARGON_MODEL) is False
 
     def test_gemma_constant_routes_to_ollama(self) -> None:
         assert is_ollama_model(config.GEMMA3_MODEL) is True
 
     def test_claude_constant_routes_to_anthropic(self) -> None:
         assert is_anthropic_model(config.CLAUDE_MODEL) is True
+
+    def test_uses_thinking_level(self) -> None:
+        assert config.uses_thinking_level("gemini-4-argon") is True
+        assert config.uses_thinking_level("gemini-4-flash") is True
+        assert config.uses_thinking_level("gemini-3.7-flash") is False
+        assert config.uses_thinking_level("gemini-3.8-flash") is False
+        assert config.uses_thinking_level("claude-opus-4-7") is False
+
+    def test_get_thinking_config(self) -> None:
+        # Argon (Gemini 4)
+        assert config.get_thinking_config("gemini-4-argon", thinking_enabled=False) == {"thinking_level": "low"}
+        assert config.get_thinking_config("gemini-4-argon", thinking_enabled=True) == {"thinking_level": "high"}
+        # Gemini 3.x
+        assert config.get_thinking_config("gemini-3.7-flash", thinking_enabled=False) == {"thinking_budget": 0}
+        assert config.get_thinking_config("gemini-3.7-flash", thinking_enabled=True, thinking_budget=2048) == {"thinking_budget": 2048}
+
 
